@@ -14,6 +14,7 @@ describe('IngredientsService', () => {
       findUnique: jest.fn<() => Promise<any>>(),
       update: jest.fn<() => Promise<any>>(),
       delete: jest.fn<() => Promise<any>>(),
+      count: jest.fn<() => Promise<number>>(),
     },
   };
 
@@ -54,8 +55,27 @@ describe('IngredientsService', () => {
     ];
 
     prismaMock.ingredient.findMany.mockResolvedValue(ingredients);
-    await expect(service.findAll()).resolves.toEqual(ingredients);
-    expect(prismaMock.ingredient.findMany).toHaveBeenCalledWith({ orderBy: { name: 'asc'} });
+    prismaMock.ingredient.count.mockResolvedValue(ingredients.length);
+
+    const paginationQuery = { page: 1, limit: 10 };
+
+    await expect(service.findAll(paginationQuery)).resolves.toEqual({
+      data: ingredients,
+      meta: {
+        total: ingredients.length,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+      },
+    });
+
+
+    expect(prismaMock.ingredient.findMany).toHaveBeenCalledWith({
+      skip: 0,
+      take: 10,
+      orderBy: { name: 'asc' },
+    });
+    expect(prismaMock.ingredient.count).toHaveBeenCalled();
   });
 
   // FindOne test

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { UpdateIngredientDto } from './dto/update-ingredient.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Injectable()
 export class IngredientsService {
@@ -10,15 +11,31 @@ export class IngredientsService {
   create(createIngredientDto: CreateIngredientDto) {
     return this.prisma.ingredient.create({
       data: createIngredientDto,
-    })
+    });
   }
 
-  findAll() {
-    return this.prisma.ingredient.findMany({
-      orderBy: {
-        name: 'asc',
+  async findAll(paginationQuery: PaginationQueryDto) {
+    const { page = 1, limit = 10 } = paginationQuery;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.prisma.ingredient.findMany({
+        skip: skip,
+        take: limit,
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.ingredient.count(),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-    });
+    };
   }
 
   async findOne(id: number) {
