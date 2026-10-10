@@ -1,0 +1,27 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { IngredientsController } from './ingredients.controller';
+import { IngredientsService } from './ingredients.service';
+import { jest } from '@jest/globals';
+
+describe('IngredientsController', () => {
+  let controller: IngredientsController;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [IngredientsController],
+      providers: [{ provide: IngredientsService, useValue: {
+        create: jest.fn(),
+        findAll: jest.fn(),
+        findOne: jest.fn(),
+        update: jest.fn(),
+        remove: jest.fn(),
+        }}],
+    }).compile();
+
+    controller = module.get<IngredientsController>(IngredientsController);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+});

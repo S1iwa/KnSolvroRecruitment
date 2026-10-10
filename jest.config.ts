@@ -13,11 +13,25 @@ const paths = tsconfig?.compilerOptions?.paths ?? {};
 const config: Config = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: '.',
+  extensionsToTreatAsEsm: ['.ts'],
   testRegex: '.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.(t|j)s$': 'ts-jest',
+    '^.+\\.(t|j)s$': [
+      'ts-jest',
+      {
+        useESM: true,
+        tsconfig: {
+          module: 'ES2022',
+          moduleResolution: 'bundler',
+          isolatedModules: true,
+        },
+      },
+    ],
   },
-  moduleNameMapper: pathsToModuleNameMapper(paths, { prefix: '<rootDir>/' }),
+  moduleNameMapper: {
+    ...pathsToModuleNameMapper(paths, { prefix: '<rootDir>/' }),
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
   collectCoverageFrom: [
     'src/**/*.(t|j)s',
     'libs/**/*.(t|j)s',
