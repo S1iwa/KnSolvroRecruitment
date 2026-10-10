@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { IngredientsService } from './ingredients.service';
 import { jest } from '@jest/globals';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotFoundException } from '@nestjs/common';
 
 describe('IngredientsService', () => {
   let service: IngredientsService;
@@ -83,7 +84,11 @@ describe('IngredientsService', () => {
       updatedAt: new Date(),
     };
 
+    const existingIngredient = { id: 1, name: 'Vodka', description: 'A strong alcoholic drink', isAlcoholic: true, imageUrl: 'https://example.com/vodka.jpg' };
+
+    prismaMock.ingredient.findUnique.mockResolvedValue(existingIngredient);
     prismaMock.ingredient.update.mockResolvedValue(updatedIngredient)
+
     await expect(service.update(1, updateIngredientDto)).resolves.toEqual(updatedIngredient);
     expect(prismaMock.ingredient.update).toHaveBeenCalledWith({
       where: { id: 1 },
@@ -93,8 +98,16 @@ describe('IngredientsService', () => {
 
   // Delete test
   it('should delete an ingredient', async () => {
+    const existingIngredient = { id: 1, name: 'Vodka', description: 'A strong alcoholic drink', isAlcoholic: true, imageUrl: 'https://example.com/vodka.jpg' };
+    prismaMock.ingredient.findUnique.mockResolvedValue(existingIngredient);
     prismaMock.ingredient.delete.mockResolvedValue({});
     await expect(service.remove(1)).resolves.toEqual({});
     expect(prismaMock.ingredient.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+  });
+
+  // Test 404
+  it('should throw NotFoundException when ingredient does not exist', async () => {
+    prismaMock.ingredient.findUnique.mockResolvedValue(null);
+    await expect(service.findOne(-1)).rejects.toThrow(NotFoundException);
   });
 });
