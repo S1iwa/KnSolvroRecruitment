@@ -14,18 +14,29 @@ export class IngredientsService {
   }
 
   findAll() {
-    return `This action returns all ingredients`;
+    return this.prisma.ingredient.findMany({
+      orderBy: {
+        name: 'asc',
+      },
+    });
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} ingredient`;
+    return this.prisma.ingredient.findUnique({
+      where: { id: id },
+    })
   }
 
-  update(id: number, updateIngredientDto: UpdateIngredientDto) {
-    return `This action updates a #${id} ingredient`;
+  async update(id: number, updateIngredientDto: UpdateIngredientDto) {
+    return this.prisma.ingredient.update({
+      where: { id: id },
+      data: updateIngredientDto
+    })
   }
 
   remove(id: number) {
-    return `This action removes a #${id} ingredient`;
+    return this.prisma.ingredient.delete({
+      where: { id: id },
+    })
   }
 }
