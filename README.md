@@ -1,2 +1,2 @@
 # KnSolvroRecruitment
-Project as recruitment task to Solvro
+Project as a recruitment task to Solvro
