@@ -6,7 +6,8 @@ import {
   Patch,
   Param,
   Delete,
-  ParseIntPipe, Query,
+  ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { IngredientsService } from './ingredients.service';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';

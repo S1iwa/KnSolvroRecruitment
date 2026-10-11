@@ -10,7 +10,7 @@ export class CategoriesService {
 
   create(createCategoryDto: CreateCategoryDto) {
     return this.prisma.category.create({
-      data: createCategoryDto
+      data: createCategoryDto,
     });
   }
 
@@ -49,7 +49,7 @@ export class CategoriesService {
     await this.findOne(id);
     return this.prisma.category.update({
       where: { id },
-      data: updateCategoryDto
+      data: updateCategoryDto,
     });
   }
 

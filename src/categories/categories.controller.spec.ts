@@ -77,4 +77,4 @@ describe('CategoriesController', () => {
     expect(categoriesServiceMock.remove).toHaveBeenCalledWith(1);
     expect(result).toEqual({});
   });
-})
+});

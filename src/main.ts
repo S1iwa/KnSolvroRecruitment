@@ -13,7 +13,7 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-    })
+    }),
   );
 
   app.useGlobalFilters(new PrismaClientExceptionFilter());

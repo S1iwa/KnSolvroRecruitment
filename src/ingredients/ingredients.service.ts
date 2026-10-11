@@ -51,14 +51,14 @@ export class IngredientsService {
     await this.findOne(id);
     return this.prisma.ingredient.update({
       where: { id: id },
-      data: updateIngredientDto
-    })
+      data: updateIngredientDto,
+    });
   }
 
   async remove(id: number) {
     await this.findOne(id);
     return this.prisma.ingredient.delete({
       where: { id: id },
-    })
+    });
   }
 }

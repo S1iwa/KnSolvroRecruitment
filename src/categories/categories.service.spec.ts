@@ -21,7 +21,10 @@ describe('CategoriesService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [CategoriesService, { provide: PrismaService, useValue: prismaMock }],
+      providers: [
+        CategoriesService,
+        { provide: PrismaService, useValue: prismaMock },
+      ],
     }).compile();
 
     service = module.get<CategoriesService>(CategoriesService);
@@ -30,11 +33,20 @@ describe('CategoriesService', () => {
   // Create test
   it('should create a category', async () => {
     const createCategoryDto = { name: 'Beer' };
-    const createdCategory = { id: 1, ...createCategoryDto, createdAt: new Date(), updatedAt: new Date() };
+    const createdCategory = {
+      id: 1,
+      ...createCategoryDto,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
     prismaMock.category.create.mockResolvedValue(createdCategory);
-    await expect(service.create(createCategoryDto)).resolves.toEqual(createdCategory);
-    expect(prismaMock.category.create).toHaveBeenCalledWith({ data: createCategoryDto });
+    await expect(service.create(createCategoryDto)).resolves.toEqual(
+      createdCategory,
+    );
+    expect(prismaMock.category.create).toHaveBeenCalledWith({
+      data: createCategoryDto,
+    });
   });
 
   // FindAll test
@@ -67,20 +79,29 @@ describe('CategoriesService', () => {
 
     prismaMock.category.findUnique.mockResolvedValue(category);
     await expect(service.findOne(1)).resolves.toEqual(category);
-    expect(prismaMock.category.findUnique).toHaveBeenCalledWith({ where: { id: 1 }});
+    expect(prismaMock.category.findUnique).toHaveBeenCalledWith({
+      where: { id: 1 },
+    });
   });
 
   // Update test
   it('should update a category', async () => {
     const updateCategoryDto = { name: 'Wine' };
-    const updatedCategory = { ...updateCategoryDto, createdAt: new Date(), updatedAt: new Date() };
+    const updatedCategory = {
+      ...updateCategoryDto,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
     const existingCategory = { id: 1, name: 'Beer' };
 
     prismaMock.category.findUnique.mockResolvedValue(existingCategory);
     prismaMock.category.update.mockResolvedValue(updatedCategory);
 
     await expect(service.update(1, updateCategoryDto)).resolves.toEqual(updatedCategory);
-    expect(prismaMock.category.update).toHaveBeenCalledWith({ where: { id: 1 }, data: updateCategoryDto });
+    expect(prismaMock.category.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: updateCategoryDto,
+    });
   });
 
   // Delete test
@@ -89,7 +110,9 @@ describe('CategoriesService', () => {
     prismaMock.category.findUnique.mockResolvedValue(existingCategory);
     prismaMock.category.delete.mockResolvedValue({});
     await expect(service.remove(1)).resolves.toEqual({});
-    expect(prismaMock.category.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+    expect(prismaMock.category.delete).toHaveBeenCalledWith({
+      where: { id: 1 },
+    });
   });
 
   // Test 404

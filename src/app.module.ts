@@ -4,6 +4,6 @@ import { IngredientsModule } from './ingredients/ingredients.module';
 import { CategoriesModule } from './categories/categories.module';
 
 @Module({
-  imports: [PrismaModule, IngredientsModule, CategoriesModule]
+  imports: [PrismaModule, IngredientsModule, CategoriesModule],
 })
 export class AppModule {}

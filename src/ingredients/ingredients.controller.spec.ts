@@ -13,7 +13,7 @@ describe('IngredientsController', () => {
     findOne: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
-  }
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -21,7 +21,7 @@ describe('IngredientsController', () => {
       providers: [
         {
           provide: IngredientsService,
-          useValue: ingredientsServiceMock
+          useValue: ingredientsServiceMock,
         },
       ],
     }).compile();
@@ -31,7 +31,12 @@ describe('IngredientsController', () => {
 
   // Create test
   it('should run create method in service', async () => {
-    const dto = { name: 'Vodka', description: 'A strong alcoholic drink', isAlcoholic: true, imageUrl: 'https://example.com/vodka.jpg' };
+    const dto = {
+      name: 'Vodka',
+      description: 'A strong alcoholic drink',
+      isAlcoholic: true,
+      imageUrl: 'https://example.com/vodka.jpg',
+    };
     ingredientsServiceMock.create.mockReturnValue({ id: 1, ...dto });
 
     const result = controller.create(dto);
@@ -42,8 +47,20 @@ describe('IngredientsController', () => {
   // FindAll test
   it('should run findAll method in service', async () => {
     const ingredients = [
-      { id: 1, name: 'Vodka', description: 'A strong alcoholic drink', isAlcoholic: true, imageUrl: 'https://example.com/vodka.jpg' },
-      { id: 2, name: 'Tequila', description: 'A strong alcoholic drink', isAlcoholic: false, imageUrl: 'https://example.com/tequila.jpg' },
+      {
+        id: 1,
+        name: 'Vodka',
+        description: 'A strong alcoholic drink',
+        isAlcoholic: true,
+        imageUrl: 'https://example.com/vodka.jpg',
+      },
+      {
+        id: 2,
+        name: 'Tequila',
+        description: 'A strong alcoholic drink',
+        isAlcoholic: false,
+        imageUrl: 'https://example.com/tequila.jpg',
+      },
     ];
     ingredientsServiceMock.findAll.mockReturnValue(ingredients);
     const result = controller.findAll(new PaginationQueryDto());
@@ -53,7 +70,13 @@ describe('IngredientsController', () => {
 
   // FindOne test
   it('should run findOne method in service', async () => {
-    const ingredient = { id: 1, name: 'Vodka', description: 'A strong alcoholic drink', isAlcoholic: true, imageUrl: 'https://example.com/vodka.jpg' };
+    const ingredient = {
+      id: 1,
+      name: 'Vodka',
+      description: 'A strong alcoholic drink',
+      isAlcoholic: true,
+      imageUrl: 'https://example.com/vodka.jpg',
+    };
     ingredientsServiceMock.findOne.mockReturnValue(ingredient);
 
     const result = controller.findOne(1);
@@ -63,7 +86,12 @@ describe('IngredientsController', () => {
 
   // Update test
   it('should run update method in service', async () => {
-    const dto = { name: 'Vodka', description: 'A strong alcoholic drink', isAlcoholic: true, imageUrl: 'https://example.com/vodka.jpg' };
+    const dto = {
+      name: 'Vodka',
+      description: 'A strong alcoholic drink',
+      isAlcoholic: true,
+      imageUrl: 'https://example.com/vodka.jpg',
+    };
     ingredientsServiceMock.update.mockReturnValue({ id: 1, ...dto });
 
     const result = controller.update(1, dto);
