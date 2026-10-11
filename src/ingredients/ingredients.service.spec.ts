@@ -88,7 +88,7 @@ describe('IngredientsService', () => {
   })
 
   // Update test
-  it(('should update an ingredient'), async () => {
+  it('should update an ingredient', async () => {
     const updateIngredientDto = {
       name: 'Rum',
       description: 'A strong alcoholic drink',

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CategoriesController } from './categories.controller';
 import { CategoriesService } from './categories.service';
 import { jest } from '@jest/globals';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 describe('CategoriesController', () => {
   let controller: CategoriesController;
@@ -45,7 +46,7 @@ describe('CategoriesController', () => {
       { id: 2, name: 'Wine' },
     ];
     categoriesServiceMock.findAll.mockReturnValue(categories);
-    const result = controller.findAll();
+    const result = controller.findAll(new PaginationQueryDto());
     expect(result).toEqual(categories);
     expect(categoriesServiceMock.findAll).toHaveBeenCalled();
   });
@@ -55,7 +56,7 @@ describe('CategoriesController', () => {
     const category = { id: 1, name: 'Beer' };
     categoriesServiceMock.findOne.mockReturnValue(category);
 
-    const result = controller.findOne(String(1));
+    const result = controller.findOne(1);
     expect(result).toEqual(category);
     expect(categoriesServiceMock.findOne).toHaveBeenCalledWith(1);
   });
@@ -64,7 +65,7 @@ describe('CategoriesController', () => {
   it('should run update method in service', async () => {
     const dto = { name: 'Short drink' };
     categoriesServiceMock.update.mockReturnValue({ id: 1, ...dto });
-    const result = controller.update(String(1), dto);
+    const result = controller.update(1, dto);
     expect(categoriesServiceMock.update).toHaveBeenCalledWith(1, dto);
     expect(result).toEqual({ id: 1, ...dto });
   });
@@ -72,7 +73,7 @@ describe('CategoriesController', () => {
   // Delete test
   it('should run remove method in service', async () => {
     categoriesServiceMock.remove.mockReturnValue({});
-    const result = controller.remove(String(1));
+    const result = controller.remove(1);
     expect(categoriesServiceMock.remove).toHaveBeenCalledWith(1);
     expect(result).toEqual({});
   });

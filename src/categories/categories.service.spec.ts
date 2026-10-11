@@ -3,6 +3,7 @@ import { CategoriesService } from './categories.service';
 import { jest } from '@jest/globals';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotFoundException } from '@nestjs/common';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 describe('CategoriesService', () => {
   let service: CategoriesService;
@@ -14,8 +15,9 @@ describe('CategoriesService', () => {
       findUnique: jest.fn<() => Promise<any>>(),
       update: jest.fn<() => Promise<any>>(),
       delete: jest.fn<() => Promise<any>>(),
-    }
-  }
+      count: jest.fn<() => Promise<number>>(),
+    },
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -43,8 +45,20 @@ describe('CategoriesService', () => {
     ];
 
     prismaMock.category.findMany.mockResolvedValue(categories);
-    await expect(service.findAll()).resolves.toEqual(categories);
-    expect(prismaMock.category.findMany).toHaveBeenCalledWith({ orderBy: { name: 'asc' }});
+    prismaMock.category.count.mockResolvedValue(2);
+
+    const result = await service.findAll(new PaginationQueryDto());
+
+    expect(result).toEqual({
+      data: categories,
+      meta: { total: 2, page: 1, limit: 10, totalPages: 1 },
+    });
+    expect(prismaMock.category.findMany).toHaveBeenCalledWith({
+      skip: 0,
+      take: 10,
+      orderBy: { name: 'asc' },
+    });
+    expect(prismaMock.category.count).toHaveBeenCalled();
   });
 
   // FindOne test

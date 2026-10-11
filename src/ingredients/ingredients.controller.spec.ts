@@ -59,7 +59,7 @@ describe('IngredientsController', () => {
     const result = controller.findOne(1);
     expect(result).toEqual(ingredient);
     expect(ingredientsServiceMock.findOne).toHaveBeenCalledWith(1);
-  })
+  });
 
   // Update test
   it('should run update method in service', async () => {
