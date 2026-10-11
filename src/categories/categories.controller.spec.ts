@@ -51,7 +51,7 @@ describe('CategoriesController', () => {
   });
 
   // FindOne test
-  it('should run findOne method in service', () => {
+  it('should run findOne method in service', async () => {
     const category = { id: 1, name: 'Beer' };
     categoriesServiceMock.findOne.mockReturnValue(category);
 
@@ -61,7 +61,7 @@ describe('CategoriesController', () => {
   });
 
   // Update test
-  it('should run update method in service', () => {
+  it('should run update method in service', async () => {
     const dto = { name: 'Short drink' };
     categoriesServiceMock.update.mockReturnValue({ id: 1, ...dto });
     const result = controller.update(String(1), dto);
@@ -70,7 +70,7 @@ describe('CategoriesController', () => {
   });
 
   // Delete test
-  it('should run remove method in service', () => {
+  it('should run remove method in service', async () => {
     categoriesServiceMock.remove.mockReturnValue({});
     const result = controller.remove(String(1));
     expect(categoriesServiceMock.remove).toHaveBeenCalledWith(1);
