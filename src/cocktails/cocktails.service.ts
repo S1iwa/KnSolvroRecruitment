@@ -72,9 +72,27 @@ export class CocktailsService {
     const { ingredients, ...updateData } = dto;
     return this.prisma.$transaction(async (tx) => {
       if (ingredients !== undefined) {
-        
+        await tx.cocktailIngredient.createMany({
+          data: ingredients.map((ing) => ({
+            cocktailId: id,
+            ingredientId: ing.ingredientId,
+            amountValue: ing.amountValue,
+            amountUnit: ing.amountUnit,
+            amountText: ing.amountText,
+            order: ing.order,
+          })),
+        });
       }
-    })
+
+      return tx.cocktail.update({
+        where: { id },
+        data: updateData,
+        include: {
+          ingredients: { include: { ingredient: true } },
+          category: true,
+        },
+      });
+    });
   }
 
   async remove(id: number) {

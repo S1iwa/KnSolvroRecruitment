@@ -1,7 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { CocktailsService } from './cocktails.service';
 import { CreateCocktailDto } from './dto/create-cocktail.dto';
 import { UpdateCocktailDto } from './dto/update-cocktail.dto';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Controller('cocktails')
 export class CocktailsController {
@@ -13,22 +24,22 @@ export class CocktailsController {
   }
 
   @Get()
-  findAll() {
-    return this.cocktailsService.findAll();
+  findAll(@Query() paginationQuery: PaginationQueryDto) {
+    return this.cocktailsService.findAll(paginationQuery);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.cocktailsService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.cocktailsService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCocktailDto: UpdateCocktailDto) {
-    return this.cocktailsService.update(+id, updateCocktailDto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateCocktailDto: UpdateCocktailDto) {
+    return this.cocktailsService.update(id, updateCocktailDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.cocktailsService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.cocktailsService.remove(id);
   }
 }
