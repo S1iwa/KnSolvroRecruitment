@@ -97,7 +97,9 @@ describe('CategoriesService', () => {
     prismaMock.category.findUnique.mockResolvedValue(existingCategory);
     prismaMock.category.update.mockResolvedValue(updatedCategory);
 
-    await expect(service.update(1, updateCategoryDto)).resolves.toEqual(updatedCategory);
+    await expect(service.update(1, updateCategoryDto)).resolves.toEqual(
+      updatedCategory,
+    );
     expect(prismaMock.category.update).toHaveBeenCalledWith({
       where: { id: 1 },
       data: updateCategoryDto,

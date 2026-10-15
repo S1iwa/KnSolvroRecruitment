@@ -23,7 +23,7 @@ export class CreateCocktailDto {
 
   @IsInt()
   authorId: number;
-  
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CocktailIngredientDto)

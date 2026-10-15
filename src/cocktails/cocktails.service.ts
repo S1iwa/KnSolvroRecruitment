@@ -40,7 +40,10 @@ export class CocktailsService {
         skip: skip,
         take: limit,
         orderBy: { name: 'asc' },
-        include: { ingredients: { include: { ingredient: true } }, category: true },
+        include: {
+          ingredients: { include: { ingredient: true } },
+          category: true,
+        },
       }),
       this.prisma.cocktail.count(),
     ]);
@@ -53,14 +56,16 @@ export class CocktailsService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
-      include: { ingredients: { include: { ingredient: true } }, category: true },
     };
   }
 
   async findOne(id: number) {
     const cocktail = await this.prisma.cocktail.findUnique({
       where: { id: id },
-      include: { ingredients: { include: { ingredient: true } }, category: true }
+      include: {
+        ingredients: { include: { ingredient: true } },
+        category: true,
+      },
     });
     if (!cocktail)
       throw new NotFoundException(`Cocktail with ID ${id} not found`);
@@ -72,6 +77,9 @@ export class CocktailsService {
     const { ingredients, ...updateData } = dto;
     return this.prisma.$transaction(async (tx) => {
       if (ingredients !== undefined) {
+        await tx.cocktailIngredient.deleteMany({
+          where: { cocktailId: id },
+        });
         await tx.cocktailIngredient.createMany({
           data: ingredients.map((ing) => ({
             cocktailId: id,
@@ -102,7 +110,7 @@ export class CocktailsService {
       include: {
         ingredients: { include: { ingredient: true } },
         category: true,
-      }
+      },
     });
   }
 }

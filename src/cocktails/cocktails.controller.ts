@@ -34,7 +34,10 @@ export class CocktailsController {
   }
 
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateCocktailDto: UpdateCocktailDto) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateCocktailDto: UpdateCocktailDto,
+  ) {
     return this.cocktailsService.update(id, updateCocktailDto);
   }
 
