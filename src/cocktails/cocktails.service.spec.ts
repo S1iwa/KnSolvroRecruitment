@@ -8,7 +8,11 @@ import {
 } from '../test/factories';
 import { jest } from '@jest/globals';
 import { NotFoundException } from '@nestjs/common';
-import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import {
+  CocktailSortBy,
+  FilterCocktailsDto,
+  SortOrder,
+} from './dto/filter-cocktails.dto';
 
 describe('CocktailsService', () => {
   let service: CocktailsService;
@@ -72,7 +76,7 @@ describe('CocktailsService', () => {
   });
 
   describe('findAll', () => {
-    it('should return paginated cocktails', async () => {
+    it('should return paginated cocktails without filters', async () => {
       const cocktails = [
         makeCocktail({ id: 1, name: 'Mojito' }),
         makeCocktail({ id: 2, name: 'Negroni' }),
@@ -80,8 +84,8 @@ describe('CocktailsService', () => {
       prismaMock.cocktail.findMany.mockResolvedValue(cocktails);
       prismaMock.cocktail.count.mockResolvedValue(2);
 
-      const paginationQuery: PaginationQueryDto = { page: 1, limit: 10 };
-      const result = await service.findAll(paginationQuery);
+      const query: FilterCocktailsDto = { page: 1, limit: 10 };
+      const result = await service.findAll(query);
 
       expect(result).toEqual({
         data: cocktails,
@@ -93,6 +97,7 @@ describe('CocktailsService', () => {
         },
       });
       expect(prismaMock.cocktail.findMany).toHaveBeenCalledWith({
+        where: {},
         skip: 0,
         take: 10,
         orderBy: { name: 'asc' },
@@ -101,7 +106,7 @@ describe('CocktailsService', () => {
           category: true,
         },
       });
-      expect(prismaMock.cocktail.count).toHaveBeenCalled();
+      expect(prismaMock.cocktail.count).toHaveBeenCalledWith({ where: {} });
     });
 
     it('should use default pagination values when query is empty', async () => {
@@ -120,6 +125,7 @@ describe('CocktailsService', () => {
         },
       });
       expect(prismaMock.cocktail.findMany).toHaveBeenCalledWith({
+        where: {},
         skip: 0,
         take: 10,
         orderBy: { name: 'asc' },
@@ -128,7 +134,164 @@ describe('CocktailsService', () => {
           category: true,
         },
       });
-      expect(prismaMock.cocktail.count).toHaveBeenCalled();
+      expect(prismaMock.cocktail.count).toHaveBeenCalledWith({ where: {} });
+    });
+
+    it('should filter by search substring, categoryId, and authorId', async () => {
+      prismaMock.cocktail.findMany.mockResolvedValue([]);
+      prismaMock.cocktail.count.mockResolvedValue(0);
+
+      const query: FilterCocktailsDto = {
+        search: 'mojito',
+        categoryId: 2,
+        authorId: 5,
+      };
+
+      await service.findAll(query);
+
+      expect(prismaMock.cocktail.findMany).toHaveBeenCalledWith({
+        where: {
+          name: { contains: 'mojito', mode: 'insensitive' },
+          categoryId: 2,
+          authorId: 5,
+        },
+        skip: 0,
+        take: 10,
+        orderBy: { name: 'asc' },
+        include: {
+          ingredients: { include: { ingredient: true } },
+          category: true,
+        },
+      });
+      expect(prismaMock.cocktail.count).toHaveBeenCalledWith({
+        where: {
+          name: { contains: 'mojito', mode: 'insensitive' },
+          categoryId: 2,
+          authorId: 5,
+        },
+      });
+    });
+
+    it('should filter non-alcoholic cocktails (isAlcoholic = false)', async () => {
+      prismaMock.cocktail.findMany.mockResolvedValue([]);
+      prismaMock.cocktail.count.mockResolvedValue(0);
+
+      await service.findAll({ isAlcoholic: false });
+
+      expect(prismaMock.cocktail.findMany).toHaveBeenCalledWith({
+        where: {
+          ingredients: {
+            none: {
+              ingredient: {
+                isAlcoholic: true,
+              },
+            },
+          },
+        },
+        skip: 0,
+        take: 10,
+        orderBy: { name: 'asc' },
+        include: {
+          ingredients: { include: { ingredient: true } },
+          category: true,
+        },
+      });
+    });
+
+    it('should filter alcoholic cocktails (isAlcoholic = true)', async () => {
+      prismaMock.cocktail.findMany.mockResolvedValue([]);
+      prismaMock.cocktail.count.mockResolvedValue(0);
+
+      await service.findAll({ isAlcoholic: true });
+
+      expect(prismaMock.cocktail.findMany).toHaveBeenCalledWith({
+        where: {
+          ingredients: {
+            some: {
+              ingredient: {
+                isAlcoholic: true,
+              },
+            },
+          },
+        },
+        skip: 0,
+        take: 10,
+        orderBy: { name: 'asc' },
+        include: {
+          ingredients: { include: { ingredient: true } },
+          category: true,
+        },
+      });
+    });
+
+    it('should filter by ingredientName and custom sorting (createdAt desc)', async () => {
+      prismaMock.cocktail.findMany.mockResolvedValue([]);
+      prismaMock.cocktail.count.mockResolvedValue(0);
+
+      await service.findAll({
+        ingredientName: 'mint',
+        sortBy: CocktailSortBy.CREATED_AT,
+        sortOrder: SortOrder.DESC,
+      });
+
+      expect(prismaMock.cocktail.findMany).toHaveBeenCalledWith({
+        where: {
+          ingredients: {
+            some: {
+              ingredient: {
+                name: { contains: 'mint', mode: 'insensitive' },
+              },
+            },
+          },
+        },
+        skip: 0,
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          ingredients: { include: { ingredient: true } },
+          category: true,
+        },
+      });
+    });
+
+    it('should combine isAlcoholic and ingredientId with AND', async () => {
+      prismaMock.cocktail.findMany.mockResolvedValue([]);
+      prismaMock.cocktail.count.mockResolvedValue(0);
+
+      await service.findAll({
+        isAlcoholic: false,
+        ingredientId: 4,
+      });
+
+      expect(prismaMock.cocktail.findMany).toHaveBeenCalledWith({
+        where: {
+          AND: [
+            {
+              ingredients: {
+                none: {
+                  ingredient: {
+                    isAlcoholic: true,
+                  },
+                },
+              },
+            },
+            {
+              ingredients: {
+                some: {
+                  ingredientId: 4,
+                },
+              },
+            },
+          ],
+        },
+        skip: 0,
+        take: 10,
+        orderBy: { name: 'asc' },
+        include: {
+          ingredients: { include: { ingredient: true } },
+          category: true,
+        },
+      });
     });
   });
 

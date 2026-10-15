@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CocktailsController } from './cocktails.controller';
 import { CocktailsService } from './cocktails.service';
 import { jest } from '@jest/globals';
-import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { FilterCocktailsDto } from './dto/filter-cocktails.dto';
 import {
   makeCocktail,
   makeCreateCocktailDto,
@@ -55,7 +55,7 @@ describe('CocktailsController', () => {
     };
     cocktailsServiceMock.findAll.mockReturnValue(response);
 
-    const query = new PaginationQueryDto();
+    const query = new FilterCocktailsDto();
     const result = controller.findAll(query);
     expect(result).toEqual(response);
     expect(cocktailsServiceMock.findAll).toHaveBeenCalledWith(query);

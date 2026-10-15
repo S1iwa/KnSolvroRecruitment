@@ -12,7 +12,7 @@ import {
 import { CocktailsService } from './cocktails.service';
 import { CreateCocktailDto } from './dto/create-cocktail.dto';
 import { UpdateCocktailDto } from './dto/update-cocktail.dto';
-import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { FilterCocktailsDto } from './dto/filter-cocktails.dto';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('cocktails')
@@ -26,8 +26,8 @@ export class CocktailsController {
   }
 
   @Get()
-  findAll(@Query() paginationQuery: PaginationQueryDto) {
-    return this.cocktailsService.findAll(paginationQuery);
+  findAll(@Query() query: FilterCocktailsDto) {
+    return this.cocktailsService.findAll(query);
   }
 
   @Get(':id')

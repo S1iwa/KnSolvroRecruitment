@@ -1,8 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCocktailDto } from './dto/create-cocktail.dto';
 import { UpdateCocktailDto } from './dto/update-cocktail.dto';
+import {
+  CocktailSortBy,
+  FilterCocktailsDto,
+  SortOrder,
+} from './dto/filter-cocktails.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { Prisma } from '../generated/prisma/client';
 
 @Injectable()
 export class CocktailsService {
@@ -31,21 +36,81 @@ export class CocktailsService {
     });
   }
 
-  async findAll(paginationQuery: PaginationQueryDto) {
-    const { page = 1, limit = 10 } = paginationQuery;
+  async findAll(query: FilterCocktailsDto = {}) {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      categoryId,
+      authorId,
+      ingredientId,
+      ingredientName,
+      isAlcoholic,
+      sortBy = CocktailSortBy.NAME,
+      sortOrder = SortOrder.ASC,
+    } = query;
+
     const skip = (page - 1) * limit;
+    const where: Prisma.CocktailWhereInput = {};
+
+    if (search)
+      where.name = { contains: search, mode: 'insensitive' };
+    if (categoryId !== undefined)
+      where.categoryId = categoryId;
+    if (authorId !== undefined)
+      where.authorId = authorId;
+    if (isAlcoholic !== undefined)
+      if (isAlcoholic)
+        where.ingredients = {
+          some: {
+            ingredient: {
+              isAlcoholic: true,
+            },
+          },
+        };
+      else
+        where.ingredients = {
+          none: {
+            ingredient: {
+              isAlcoholic: true,
+            },
+          },
+        };
+
+    if (ingredientId !== undefined || ingredientName) {
+      const ingredientCondition: Prisma.CocktailIngredientWhereInput = {};
+      if (ingredientId !== undefined)
+        ingredientCondition.ingredientId = ingredientId;
+      if (ingredientName)
+        ingredientCondition.ingredient = {
+          name: { contains: ingredientName, mode: 'insensitive' },
+        };
+
+      if (where.ingredients) {
+        where.AND = [
+          { ingredients: where.ingredients },
+          { ingredients: { some: ingredientCondition } },
+        ];
+        delete where.ingredients;
+      } else {
+        where.ingredients = {
+          some: ingredientCondition,
+        };
+      }
+    }
 
     const [data, total] = await Promise.all([
       this.prisma.cocktail.findMany({
-        skip: skip,
+        where,
+        skip,
         take: limit,
-        orderBy: { name: 'asc' },
+        orderBy: { [sortBy]: sortOrder },
         include: {
           ingredients: { include: { ingredient: true } },
           category: true,
         },
       }),
-      this.prisma.cocktail.count(),
+      this.prisma.cocktail.count({ where }),
     ]);
 
     return {
