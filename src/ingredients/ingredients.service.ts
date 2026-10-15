@@ -47,11 +47,11 @@ export class IngredientsService {
     return ingredient;
   }
 
-  async update(id: number, updateIngredientDto: UpdateIngredientDto) {
+  async update(id: number, dto: UpdateIngredientDto) {
     await this.findOne(id);
     return this.prisma.ingredient.update({
       where: { id: id },
-      data: updateIngredientDto,
+      data: dto,
     });
   }
 
