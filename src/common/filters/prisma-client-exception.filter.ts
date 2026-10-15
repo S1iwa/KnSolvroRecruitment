@@ -18,7 +18,7 @@ export class PrismaClientExceptionFilter implements ExceptionFilter {
         const status = HttpStatus.CONFLICT;
         response.status(status).json({
           statusCode: status,
-          message: 'Rekord jest powiązany z innymi danymi',
+          message: 'Record is referenced by other data',
           error: 'Conflict',
         });
         break;
@@ -27,7 +27,7 @@ export class PrismaClientExceptionFilter implements ExceptionFilter {
         const status = HttpStatus.CONFLICT;
         response.status(status).json({
           statusCode: status,
-          message: 'Rekord o podanych danych już istnieje',
+          message: 'Record with provided data already exists',
           error: 'Conflict',
         });
         break;
@@ -36,7 +36,7 @@ export class PrismaClientExceptionFilter implements ExceptionFilter {
         const status = HttpStatus.NOT_FOUND;
         response.status(status).json({
           statusCode: status,
-          message: 'Nie znaleziono danych',
+          message: 'Record not found',
           error: 'Not Found',
         });
         break;
@@ -44,7 +44,7 @@ export class PrismaClientExceptionFilter implements ExceptionFilter {
       default: {
         response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'Błąd serwera',
+          message: 'Internal server error',
         });
         break;
       }

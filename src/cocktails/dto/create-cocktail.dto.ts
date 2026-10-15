@@ -9,27 +9,6 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class CreateCocktailDto {
-  @IsString()
-  @MinLength(3)
-  name: string;
-
-  @IsString()
-  @MinLength(3)
-  instructions: string;
-
-  @IsInt()
-  categoryId: number;
-
-  @IsInt()
-  authorId: number;
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CocktailIngredientDto)
-  ingredients: CocktailIngredientDto[];
-}
-
 export class CocktailIngredientDto {
   @IsInt()
   ingredientId: number;
@@ -49,4 +28,25 @@ export class CocktailIngredientDto {
   @IsOptional()
   @IsInt()
   order?: number;
+}
+
+export class CreateCocktailDto {
+  @IsString()
+  @MinLength(3)
+  name: string;
+
+  @IsString()
+  @MinLength(3)
+  instructions: string;
+
+  @IsInt()
+  categoryId: number;
+
+  @IsInt()
+  authorId: number;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CocktailIngredientDto)
+  ingredients: CocktailIngredientDto[];
 }

@@ -5,7 +5,7 @@ export function makeCocktail(overrides: Record<string, any> = {}) {
   return {
     id: 1,
     name: 'Mojito',
-    instructions: 'Ugnieć miętę i lej rum',
+    instructions: 'Muddle mint leaves, add rum and top with soda',
     categoryId: 1,
     authorId: 1,
     createdAt: new Date(),
@@ -24,12 +24,13 @@ export function makeCreateCocktailDto(
 ): CreateCocktailDto {
   return {
     name: 'Mojito',
-    instructions: 'Ugnieć miętę z cukrem, dodaj rum i sok z limonki.',
+    instructions:
+      'Muddle mint leaves with sugar, add rum and fresh lime juice.',
     categoryId: 1,
     authorId: 1,
     ingredients: [
       { ingredientId: 1, amountValue: 50, amountUnit: 'ml' },
-      { ingredientId: 2, amountText: 'szczypta' },
+      { ingredientId: 2, amountText: 'pinch' },
     ],
     ...overrides,
   };
@@ -40,7 +41,7 @@ export function makeUpdateCocktailDto(
 ): UpdateCocktailDto {
   return {
     name: 'Mojito Royal',
-    instructions: 'Ugnieć miętę, dodaj rum i dopełnij prosecco.',
+    instructions: 'Muddle mint, add rum and top with prosecco.',
     ...overrides,
   };
 }

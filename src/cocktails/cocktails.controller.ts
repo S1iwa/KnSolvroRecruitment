@@ -13,7 +13,9 @@ import { CocktailsService } from './cocktails.service';
 import { CreateCocktailDto } from './dto/create-cocktail.dto';
 import { UpdateCocktailDto } from './dto/update-cocktail.dto';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('cocktails')
 @Controller('cocktails')
 export class CocktailsController {
   constructor(private readonly cocktailsService: CocktailsService) {}
