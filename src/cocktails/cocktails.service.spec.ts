@@ -7,12 +7,14 @@ import {
   makeUpdateCocktailDto,
 } from '../test/factories';
 import { jest } from '@jest/globals';
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import {
   CocktailSortBy,
   FilterCocktailsDto,
   SortOrder,
 } from './dto/filter-cocktails.dto';
+import { Role } from '../generated/prisma/enums';
+import { UserPayload } from '../auth/strategies/jwt.strategy';
 
 describe('CocktailsService', () => {
   let service: CocktailsService;
@@ -47,19 +49,19 @@ describe('CocktailsService', () => {
   });
 
   describe('create', () => {
-    it('should create a cocktail with ingredients', async () => {
+    it('should create a cocktail with ingredients and assign authorId', async () => {
       const dto = makeCreateCocktailDto();
-      const created = makeCocktail();
+      const created = makeCocktail({ authorId: 1 });
 
       prismaMock.cocktail.create.mockResolvedValue(created);
 
-      await expect(service.create(dto)).resolves.toEqual(created);
+      await expect(service.create(dto, 1)).resolves.toEqual(created);
       expect(prismaMock.cocktail.create).toHaveBeenCalledWith({
         data: {
           name: dto.name,
           instructions: dto.instructions,
           categoryId: dto.categoryId,
-          authorId: dto.authorId,
+          authorId: 1,
           ingredients: {
             create: dto.ingredients.map((ing) => ({
               ingredientId: ing.ingredientId,
@@ -325,19 +327,39 @@ describe('CocktailsService', () => {
   });
 
   describe('update', () => {
-    it('should update cocktail and replace ingredients when ingredients are provided', async () => {
-      const existing = makeCocktail({ id: 1 });
+    const authorUser: UserPayload = {
+      id: 1,
+      email: 'author@example.com',
+      role: Role.USER,
+    };
+    const adminUser: UserPayload = {
+      id: 99,
+      email: 'admin@example.com',
+      role: Role.ADMIN,
+    };
+    const otherUser: UserPayload = {
+      id: 2,
+      email: 'other@example.com',
+      role: Role.USER,
+    };
+
+    it('should update cocktail and replace ingredients when author performs update', async () => {
+      const existing = makeCocktail({ id: 1, authorId: 1 });
       const updateDto = makeUpdateCocktailDto({
         ingredients: [{ ingredientId: 3, amountValue: 60, amountUnit: 'ml' }],
       });
-      const updated = makeCocktail({ id: 1, name: updateDto.name });
+      const updated = makeCocktail({
+        id: 1,
+        authorId: 1,
+        name: updateDto.name,
+      });
 
       prismaMock.cocktail.findUnique.mockResolvedValue(existing);
       prismaMock.cocktailIngredient.deleteMany.mockResolvedValue({ count: 2 });
       prismaMock.cocktailIngredient.createMany.mockResolvedValue({ count: 1 });
       prismaMock.cocktail.update.mockResolvedValue(updated);
 
-      const result = await service.update(1, updateDto);
+      const result = await service.update(1, updateDto, authorUser);
 
       expect(result).toEqual(updated);
       expect(prismaMock.cocktailIngredient.deleteMany).toHaveBeenCalledWith({
@@ -369,14 +391,18 @@ describe('CocktailsService', () => {
     });
 
     it('should update cocktail without touching ingredients when ingredients are not provided', async () => {
-      const existing = makeCocktail({ id: 1 });
+      const existing = makeCocktail({ id: 1, authorId: 1 });
       const updateDto = { name: 'Simple Name Update' };
-      const updated = makeCocktail({ id: 1, name: 'Simple Name Update' });
+      const updated = makeCocktail({
+        id: 1,
+        authorId: 1,
+        name: 'Simple Name Update',
+      });
 
       prismaMock.cocktail.findUnique.mockResolvedValue(existing);
       prismaMock.cocktail.update.mockResolvedValue(updated);
 
-      const result = await service.update(1, updateDto);
+      const result = await service.update(1, updateDto, authorUser);
 
       expect(result).toEqual(updated);
       expect(prismaMock.cocktailIngredient.deleteMany).not.toHaveBeenCalled();
@@ -391,23 +417,65 @@ describe('CocktailsService', () => {
       });
     });
 
+    it('should allow admin to update cocktail even if not author', async () => {
+      const existing = makeCocktail({ id: 1, authorId: 1 });
+      const updateDto = { name: 'Admin Update' };
+      const updated = makeCocktail({
+        id: 1,
+        authorId: 1,
+        name: 'Admin Update',
+      });
+
+      prismaMock.cocktail.findUnique.mockResolvedValue(existing);
+      prismaMock.cocktail.update.mockResolvedValue(updated);
+
+      const result = await service.update(1, updateDto, adminUser);
+      expect(result).toEqual(updated);
+    });
+
+    it('should throw ForbiddenException when user is not author and not admin', async () => {
+      const existing = makeCocktail({ id: 1, authorId: 1 });
+      prismaMock.cocktail.findUnique.mockResolvedValue(existing);
+
+      await expect(
+        service.update(1, { name: 'Unauthorized' }, otherUser),
+      ).rejects.toThrow(ForbiddenException);
+      expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    });
+
     it('should throw NotFoundException when cocktail does not exist', async () => {
       prismaMock.cocktail.findUnique.mockResolvedValue(null);
 
-      await expect(service.update(999, { name: 'Mojito' })).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.update(999, { name: 'Mojito' }, authorUser),
+      ).rejects.toThrow(NotFoundException);
       expect(prismaMock.$transaction).not.toHaveBeenCalled();
     });
   });
 
   describe('remove', () => {
-    it('should remove a cocktail by id', async () => {
-      const existing = makeCocktail({ id: 1 });
+    const authorUser: UserPayload = {
+      id: 1,
+      email: 'author@example.com',
+      role: Role.USER,
+    };
+    const adminUser: UserPayload = {
+      id: 99,
+      email: 'admin@example.com',
+      role: Role.ADMIN,
+    };
+    const otherUser: UserPayload = {
+      id: 2,
+      email: 'other@example.com',
+      role: Role.USER,
+    };
+
+    it('should remove a cocktail by id when user is author', async () => {
+      const existing = makeCocktail({ id: 1, authorId: 1 });
       prismaMock.cocktail.findUnique.mockResolvedValue(existing);
       prismaMock.cocktail.delete.mockResolvedValue(existing);
 
-      const result = await service.remove(1);
+      const result = await service.remove(1, authorUser);
 
       expect(result).toEqual(existing);
       expect(prismaMock.cocktail.delete).toHaveBeenCalledWith({
@@ -419,10 +487,31 @@ describe('CocktailsService', () => {
       });
     });
 
-    it('should throw NotFoundException when cocktail does not exist', async () => {
+    it('should allow admin to remove cocktail even if not author', async () => {
+      const existing = makeCocktail({ id: 1, authorId: 1 });
+      prismaMock.cocktail.findUnique.mockResolvedValue(existing);
+      prismaMock.cocktail.delete.mockResolvedValue(existing);
+
+      const result = await service.remove(1, adminUser);
+      expect(result).toEqual(existing);
+    });
+
+    it('should throw ForbiddenException when user is not author and not admin on remove', async () => {
+      const existing = makeCocktail({ id: 1, authorId: 1 });
+      prismaMock.cocktail.findUnique.mockResolvedValue(existing);
+
+      await expect(service.remove(1, otherUser)).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(prismaMock.cocktail.delete).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when cocktail does not exist on remove', async () => {
       prismaMock.cocktail.findUnique.mockResolvedValue(null);
 
-      await expect(service.remove(-1)).rejects.toThrow(NotFoundException);
+      await expect(service.remove(-1, authorUser)).rejects.toThrow(
+        NotFoundException,
+      );
       expect(prismaMock.cocktail.delete).not.toHaveBeenCalled();
     });
   });

@@ -6,6 +6,12 @@ import { CocktailsModule } from './cocktails/cocktails.module';
 import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [PrismaModule, IngredientsModule, CategoriesModule, CocktailsModule, AuthModule],
+  imports: [
+    PrismaModule,
+    IngredientsModule,
+    CategoriesModule,
+    CocktailsModule,
+    AuthModule,
+  ],
 })
 export class AppModule {}

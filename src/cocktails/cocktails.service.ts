@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCocktailDto } from './dto/create-cocktail.dto';
 import { UpdateCocktailDto } from './dto/update-cocktail.dto';
 import {
@@ -7,19 +11,20 @@ import {
   SortOrder,
 } from './dto/filter-cocktails.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '../generated/prisma/client';
+import { Prisma, Role } from '../generated/prisma/client';
+import { UserPayload } from '../auth/strategies/jwt.strategy';
 
 @Injectable()
 export class CocktailsService {
   constructor(private prisma: PrismaService) {}
 
-  create(dto: CreateCocktailDto) {
+  create(dto: CreateCocktailDto, authorId: number) {
     return this.prisma.cocktail.create({
       data: {
         name: dto.name,
         instructions: dto.instructions,
         categoryId: dto.categoryId,
-        authorId: dto.authorId,
+        authorId: authorId,
         ingredients: {
           create: dto.ingredients.map((ing) => ({
             ingredientId: ing.ingredientId,
@@ -53,12 +58,9 @@ export class CocktailsService {
     const skip = (page - 1) * limit;
     const where: Prisma.CocktailWhereInput = {};
 
-    if (search)
-      where.name = { contains: search, mode: 'insensitive' };
-    if (categoryId !== undefined)
-      where.categoryId = categoryId;
-    if (authorId !== undefined)
-      where.authorId = authorId;
+    if (search) where.name = { contains: search, mode: 'insensitive' };
+    if (categoryId !== undefined) where.categoryId = categoryId;
+    if (authorId !== undefined) where.authorId = authorId;
     if (isAlcoholic !== undefined)
       if (isAlcoholic)
         where.ingredients = {
@@ -137,8 +139,12 @@ export class CocktailsService {
     return cocktail;
   }
 
-  async update(id: number, dto: UpdateCocktailDto) {
-    await this.findOne(id);
+  async update(id: number, dto: UpdateCocktailDto, user: UserPayload) {
+    const cocktail = await this.findOne(id);
+
+    if (user.role !== Role.ADMIN && cocktail.authorId !== user.id)
+      throw new ForbiddenException('You are not allowed to edit this cocktail');
+
     const { ingredients, ...updateData } = dto;
     return this.prisma.$transaction(async (tx) => {
       if (ingredients !== undefined) {
@@ -168,8 +174,14 @@ export class CocktailsService {
     });
   }
 
-  async remove(id: number) {
-    await this.findOne(id);
+  async remove(id: number, user: UserPayload) {
+    const cocktail = await this.findOne(id);
+
+    if (user.role !== Role.ADMIN && cocktail.authorId !== user.id)
+      throw new ForbiddenException(
+        'You are not allowed to delete this cocktail',
+      );
+
     return this.prisma.cocktail.delete({
       where: { id: id },
       include: {

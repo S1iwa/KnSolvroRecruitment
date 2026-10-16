@@ -8,9 +8,17 @@ import {
   makeCreateCocktailDto,
   makeUpdateCocktailDto,
 } from '../test/factories';
+import { Role } from '../generated/prisma/enums';
+import { UserPayload } from '../auth/strategies/jwt.strategy';
 
 describe('CocktailsController', () => {
   let controller: CocktailsController;
+
+  const user: UserPayload = {
+    id: 1,
+    email: 'user@example.com',
+    role: Role.USER,
+  };
 
   const cocktailsServiceMock = {
     create: jest.fn(),
@@ -37,14 +45,14 @@ describe('CocktailsController', () => {
   });
 
   // Create test
-  it('should run create method in service', async () => {
+  it('should run create method in service with user.id', async () => {
     const dto = makeCreateCocktailDto();
     const created = makeCocktail();
     cocktailsServiceMock.create.mockReturnValue(created);
 
-    const result = controller.create(dto);
+    const result = controller.create(user, dto);
     expect(result).toEqual(created);
-    expect(cocktailsServiceMock.create).toHaveBeenCalledWith(dto);
+    expect(cocktailsServiceMock.create).toHaveBeenCalledWith(dto, user.id);
   });
 
   // FindAll test
@@ -72,22 +80,22 @@ describe('CocktailsController', () => {
   });
 
   // Update test
-  it('should run update method in service', async () => {
+  it('should run update method in service with user', async () => {
     const dto = makeUpdateCocktailDto();
     const updated = makeCocktail({ name: dto.name });
     cocktailsServiceMock.update.mockReturnValue(updated);
 
-    const result = controller.update(1, dto);
+    const result = controller.update(1, user, dto);
     expect(result).toEqual(updated);
-    expect(cocktailsServiceMock.update).toHaveBeenCalledWith(1, dto);
+    expect(cocktailsServiceMock.update).toHaveBeenCalledWith(1, dto, user);
   });
 
   // Delete test
-  it('should run remove method in service', async () => {
+  it('should run remove method in service with user', async () => {
     cocktailsServiceMock.remove.mockReturnValue({});
 
-    const result = controller.remove(1);
+    const result = controller.remove(1, user);
     expect(result).toEqual({});
-    expect(cocktailsServiceMock.remove).toHaveBeenCalledWith(1);
+    expect(cocktailsServiceMock.remove).toHaveBeenCalledWith(1, user);
   });
 });

@@ -34,7 +34,7 @@ export class AuthService {
     });
 
     const { passwordHash: _, ...result } = user;
-    return result
+    return result;
   }
 
   async login(dto: LoginDto) {
@@ -42,8 +42,7 @@ export class AuthService {
       where: { email: dto.email },
     });
 
-    if (!user)
-      throw new UnauthorizedException('Invalid credentials');
+    if (!user) throw new UnauthorizedException('Invalid credentials');
 
     const isPasswordValid = await bcrypt.compare(
       dto.password,

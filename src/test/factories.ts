@@ -27,7 +27,6 @@ export function makeCreateCocktailDto(
     instructions:
       'Muddle mint leaves with sugar, add rum and fresh lime juice.',
     categoryId: 1,
-    authorId: 1,
     ingredients: [
       { ingredientId: 1, amountValue: 50, amountUnit: 'ml' },
       { ingredientId: 2, amountText: 'pinch' },
@@ -55,6 +54,15 @@ export function makeIngredient(overrides: Record<string, any> = {}) {
     imageUrl: 'https://example.com/vodka.jpg',
     createdAt: new Date(),
     updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
+export function makeUser(overrides: Record<string, any> = {}) {
+  return {
+    id: 1,
+    email: 'user@example.com',
+    role: 'USER',
     ...overrides,
   };
 }
