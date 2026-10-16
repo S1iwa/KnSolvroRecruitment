@@ -20,6 +20,8 @@ describe('CategoriesService', () => {
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CategoriesService,
@@ -30,96 +32,127 @@ describe('CategoriesService', () => {
     service = module.get<CategoriesService>(CategoriesService);
   });
 
-  // Create test
-  it('should create a category', async () => {
-    const createCategoryDto = { name: 'Beer' };
-    const createdCategory = {
-      id: 1,
-      ...createCategoryDto,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+  describe('create', () => {
+    it('should create a category', async () => {
+      const dto = { name: 'Beer' };
+      const created = {
+        id: 1,
+        ...dto,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
-    prismaMock.category.create.mockResolvedValue(createdCategory);
-    await expect(service.create(createCategoryDto)).resolves.toEqual(
-      createdCategory,
-    );
-    expect(prismaMock.category.create).toHaveBeenCalledWith({
-      data: createCategoryDto,
+      prismaMock.category.create.mockResolvedValue(created);
+      await expect(service.create(dto)).resolves.toEqual(created);
+      expect(prismaMock.category.create).toHaveBeenCalledWith({ data: dto });
     });
   });
 
-  // FindAll test
-  it('should return all categories', async () => {
-    const categories = [
-      { id: 1, name: 'Beer' },
-      { id: 2, name: 'Wine' },
-    ];
+  describe('findAll', () => {
+    it('should return all categories with pagination meta', async () => {
+      const categories = [
+        { id: 1, name: 'Beer' },
+        { id: 2, name: 'Wine' },
+      ];
 
-    prismaMock.category.findMany.mockResolvedValue(categories);
-    prismaMock.category.count.mockResolvedValue(2);
+      prismaMock.category.findMany.mockResolvedValue(categories);
+      prismaMock.category.count.mockResolvedValue(2);
 
-    const result = await service.findAll(new PaginationQueryDto());
+      const result = await service.findAll(new PaginationQueryDto());
 
-    expect(result).toEqual({
-      data: categories,
-      meta: { total: 2, page: 1, limit: 10, totalPages: 1 },
+      expect(result).toEqual({
+        data: categories,
+        meta: { total: 2, page: 1, limit: 10, totalPages: 1 },
+      });
+      expect(prismaMock.category.findMany).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        orderBy: { name: 'asc' },
+      });
+      expect(prismaMock.category.count).toHaveBeenCalled();
     });
-    expect(prismaMock.category.findMany).toHaveBeenCalledWith({
-      skip: 0,
-      take: 10,
-      orderBy: { name: 'asc' },
-    });
-    expect(prismaMock.category.count).toHaveBeenCalled();
-  });
 
-  // FindOne test
-  it('should return a category by id', async () => {
-    const category = { id: 1, name: 'Beer' };
+    it('should handle second page correctly', async () => {
+      prismaMock.category.findMany.mockResolvedValue([]);
+      prismaMock.category.count.mockResolvedValue(15);
 
-    prismaMock.category.findUnique.mockResolvedValue(category);
-    await expect(service.findOne(1)).resolves.toEqual(category);
-    expect(prismaMock.category.findUnique).toHaveBeenCalledWith({
-      where: { id: 1 },
-    });
-  });
+      const result = await service.findAll({ page: 2, limit: 10 });
 
-  // Update test
-  it('should update a category', async () => {
-    const updateCategoryDto = { name: 'Wine' };
-    const updatedCategory = {
-      ...updateCategoryDto,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    const existingCategory = { id: 1, name: 'Beer' };
-
-    prismaMock.category.findUnique.mockResolvedValue(existingCategory);
-    prismaMock.category.update.mockResolvedValue(updatedCategory);
-
-    await expect(service.update(1, updateCategoryDto)).resolves.toEqual(
-      updatedCategory,
-    );
-    expect(prismaMock.category.update).toHaveBeenCalledWith({
-      where: { id: 1 },
-      data: updateCategoryDto,
+      expect(result.meta).toEqual({
+        total: 15,
+        page: 2,
+        limit: 10,
+        totalPages: 2,
+      });
+      expect(prismaMock.category.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 10, take: 10 }),
+      );
     });
   });
 
-  // Delete test
-  it('should delete a category', async () => {
-    const existingCategory = { id: 1, name: 'Beer' };
-    prismaMock.category.findUnique.mockResolvedValue(existingCategory);
-    prismaMock.category.delete.mockResolvedValue({});
-    await expect(service.remove(1)).resolves.toEqual({});
-    expect(prismaMock.category.delete).toHaveBeenCalledWith({
-      where: { id: 1 },
+  describe('findOne', () => {
+    it('should return a category by id', async () => {
+      const category = { id: 1, name: 'Beer' };
+
+      prismaMock.category.findUnique.mockResolvedValue(category);
+      await expect(service.findOne(1)).resolves.toEqual(category);
+      expect(prismaMock.category.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
+    });
+
+    it('should throw NotFoundException when category does not exist', async () => {
+      prismaMock.category.findUnique.mockResolvedValue(null);
+      await expect(service.findOne(-1)).rejects.toThrow(NotFoundException);
     });
   });
 
-  // Test 404
-  it('should throw NotFoundException when category does not exist', async () => {
-    prismaMock.category.findUnique.mockResolvedValue(null);
-    await expect(service.findOne(-1)).rejects.toThrow(NotFoundException);
+  describe('update', () => {
+    it('should update a category', async () => {
+      const existing = { id: 1, name: 'Beer' };
+      const dto = { name: 'Wine' };
+      const updated = {
+        id: 1,
+        ...dto,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      prismaMock.category.findUnique.mockResolvedValue(existing);
+      prismaMock.category.update.mockResolvedValue(updated);
+
+      await expect(service.update(1, dto)).resolves.toEqual(updated);
+      expect(prismaMock.category.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: dto,
+      });
+    });
+
+    it('should throw NotFoundException when category not found on update', async () => {
+      prismaMock.category.findUnique.mockResolvedValue(null);
+      await expect(service.update(999, { name: 'Ghost' })).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(prismaMock.category.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('remove', () => {
+    it('should delete a category', async () => {
+      const existing = { id: 1, name: 'Beer' };
+      prismaMock.category.findUnique.mockResolvedValue(existing);
+      prismaMock.category.delete.mockResolvedValue(existing);
+
+      await expect(service.remove(1)).resolves.toEqual(existing);
+      expect(prismaMock.category.delete).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
+    });
+
+    it('should throw NotFoundException when category not found on remove', async () => {
+      prismaMock.category.findUnique.mockResolvedValue(null);
+      await expect(service.remove(999)).rejects.toThrow(NotFoundException);
+      expect(prismaMock.category.delete).not.toHaveBeenCalled();
+    });
   });
 });

@@ -66,3 +66,13 @@ export function makeUser(overrides: Record<string, any> = {}) {
     ...overrides,
   };
 }
+
+export function makeCategory(overrides: Record<string, any> = {}) {
+  return {
+    id: 1,
+    name: 'Longdrink',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}

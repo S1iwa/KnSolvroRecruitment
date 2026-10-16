@@ -2,7 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { IngredientsController } from './ingredients.controller';
 import { IngredientsService } from './ingredients.service';
 import { jest } from '@jest/globals';
-import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { FilterIngredientsDto } from './dto/filter-ingredients.dto';
+import { makeIngredient } from '../test/factories';
+import { Reflector } from '@nestjs/core';
 
 describe('IngredientsController', () => {
   let controller: IngredientsController;
@@ -16,13 +18,13 @@ describe('IngredientsController', () => {
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [IngredientsController],
       providers: [
-        {
-          provide: IngredientsService,
-          useValue: ingredientsServiceMock,
-        },
+        { provide: IngredientsService, useValue: ingredientsServiceMock },
+        Reflector,
       ],
     }).compile();
 
@@ -44,39 +46,57 @@ describe('IngredientsController', () => {
     expect(ingredientsServiceMock.create).toHaveBeenCalledWith(dto);
   });
 
-  // FindAll test
-  it('should run findAll method in service', async () => {
+  // FindAll test – no filters
+  it('should run findAll without filters', async () => {
     const ingredients = [
-      {
-        id: 1,
-        name: 'Vodka',
-        description: 'A strong alcoholic drink',
-        isAlcoholic: true,
-        imageUrl: 'https://example.com/vodka.jpg',
-      },
-      {
-        id: 2,
-        name: 'Tequila',
-        description: 'A strong alcoholic drink',
-        isAlcoholic: false,
-        imageUrl: 'https://example.com/tequila.jpg',
-      },
+      makeIngredient({ id: 1 }),
+      makeIngredient({ id: 2, name: 'Tequila' }),
     ];
-    ingredientsServiceMock.findAll.mockReturnValue(ingredients);
-    const result = controller.findAll(new PaginationQueryDto());
-    expect(result).toEqual(ingredients);
-    expect(ingredientsServiceMock.findAll).toHaveBeenCalled();
+    const response = {
+      data: ingredients,
+      meta: { total: 2, page: 1, limit: 10, totalPages: 1 },
+    };
+    ingredientsServiceMock.findAll.mockReturnValue(response);
+
+    const query = new FilterIngredientsDto();
+    const result = controller.findAll(query);
+    expect(result).toEqual(response);
+    expect(ingredientsServiceMock.findAll).toHaveBeenCalledWith(query);
+  });
+
+  // FindAll test – with search filter
+  it('should run findAll with search filter', async () => {
+    const ingredients = [makeIngredient({ id: 1 })];
+    const response = {
+      data: ingredients,
+      meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
+    };
+    ingredientsServiceMock.findAll.mockReturnValue(response);
+
+    const query: FilterIngredientsDto = { search: 'Vodka' };
+    const result = controller.findAll(query);
+    expect(result).toEqual(response);
+    expect(ingredientsServiceMock.findAll).toHaveBeenCalledWith(query);
+  });
+
+  // FindAll test – with isAlcoholic filter
+  it('should run findAll with isAlcoholic filter', async () => {
+    const ingredients = [makeIngredient({ id: 1, isAlcoholic: true })];
+    const response = {
+      data: ingredients,
+      meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
+    };
+    ingredientsServiceMock.findAll.mockReturnValue(response);
+
+    const query: FilterIngredientsDto = { isAlcoholic: true };
+    const result = controller.findAll(query);
+    expect(result).toEqual(response);
+    expect(ingredientsServiceMock.findAll).toHaveBeenCalledWith(query);
   });
 
   // FindOne test
   it('should run findOne method in service', async () => {
-    const ingredient = {
-      id: 1,
-      name: 'Vodka',
-      description: 'A strong alcoholic drink',
-      isAlcoholic: true,
-      imageUrl: 'https://example.com/vodka.jpg',
-    };
+    const ingredient = makeIngredient({ id: 1 });
     ingredientsServiceMock.findOne.mockReturnValue(ingredient);
 
     const result = controller.findOne(1);
@@ -87,23 +107,25 @@ describe('IngredientsController', () => {
   // Update test
   it('should run update method in service', async () => {
     const dto = {
-      name: 'Vodka',
-      description: 'A strong alcoholic drink',
+      name: 'Rum',
+      description: 'A Caribbean spirit',
       isAlcoholic: true,
-      imageUrl: 'https://example.com/vodka.jpg',
     };
-    ingredientsServiceMock.update.mockReturnValue({ id: 1, ...dto });
+    const updated = makeIngredient({ id: 1, ...dto });
+    ingredientsServiceMock.update.mockReturnValue(updated);
 
     const result = controller.update(1, dto);
-    expect(result).toEqual({ id: 1, ...dto });
+    expect(result).toEqual(updated);
     expect(ingredientsServiceMock.update).toHaveBeenCalledWith(1, dto);
   });
 
   // Delete test
   it('should run remove method in service', async () => {
-    ingredientsServiceMock.remove.mockReturnValue({});
+    const ingredient = makeIngredient({ id: 1 });
+    ingredientsServiceMock.remove.mockReturnValue(ingredient);
+
     const result = controller.remove(1);
-    expect(result).toEqual({});
+    expect(result).toEqual(ingredient);
     expect(ingredientsServiceMock.remove).toHaveBeenCalledWith(1);
   });
 });

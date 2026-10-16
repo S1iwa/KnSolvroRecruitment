@@ -15,11 +15,11 @@ export class PrismaClientExceptionFilter implements ExceptionFilter {
 
     switch (exception.code) {
       case 'P2003': {
-        const status = HttpStatus.CONFLICT;
+        const status = HttpStatus.BAD_REQUEST;
         response.status(status).json({
           statusCode: status,
-          message: 'Record is referenced by other data',
-          error: 'Conflict',
+          message: 'Related record not found (foreign key constraint failed)',
+          error: 'Bad Request',
         });
         break;
       }

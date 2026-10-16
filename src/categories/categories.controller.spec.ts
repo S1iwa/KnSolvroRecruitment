@@ -3,6 +3,7 @@ import { CategoriesController } from './categories.controller';
 import { CategoriesService } from './categories.service';
 import { jest } from '@jest/globals';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { Reflector } from '@nestjs/core';
 
 describe('CategoriesController', () => {
   let controller: CategoriesController;
@@ -16,13 +17,13 @@ describe('CategoriesController', () => {
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CategoriesController],
       providers: [
-        {
-          provide: CategoriesService,
-          useValue: categoriesServiceMock,
-        },
+        { provide: CategoriesService, useValue: categoriesServiceMock },
+        Reflector,
       ],
     }).compile();
 
@@ -45,9 +46,14 @@ describe('CategoriesController', () => {
       { id: 1, name: 'Beer' },
       { id: 2, name: 'Wine' },
     ];
-    categoriesServiceMock.findAll.mockReturnValue(categories);
+    const response = {
+      data: categories,
+      meta: { total: 2, page: 1, limit: 10, totalPages: 1 },
+    };
+    categoriesServiceMock.findAll.mockReturnValue(response);
+
     const result = controller.findAll(new PaginationQueryDto());
-    expect(result).toEqual(categories);
+    expect(result).toEqual(response);
     expect(categoriesServiceMock.findAll).toHaveBeenCalled();
   });
 
@@ -65,6 +71,7 @@ describe('CategoriesController', () => {
   it('should run update method in service', async () => {
     const dto = { name: 'Short drink' };
     categoriesServiceMock.update.mockReturnValue({ id: 1, ...dto });
+
     const result = controller.update(1, dto);
     expect(categoriesServiceMock.update).toHaveBeenCalledWith(1, dto);
     expect(result).toEqual({ id: 1, ...dto });
@@ -72,9 +79,11 @@ describe('CategoriesController', () => {
 
   // Delete test
   it('should run remove method in service', async () => {
-    categoriesServiceMock.remove.mockReturnValue({});
+    const category = { id: 1, name: 'Beer' };
+    categoriesServiceMock.remove.mockReturnValue(category);
+
     const result = controller.remove(1);
     expect(categoriesServiceMock.remove).toHaveBeenCalledWith(1);
-    expect(result).toEqual({});
+    expect(result).toEqual(category);
   });
 });

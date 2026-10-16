@@ -3,6 +3,7 @@ import { IngredientsService } from './ingredients.service';
 import { jest } from '@jest/globals';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotFoundException } from '@nestjs/common';
+import { makeIngredient } from '../test/factories';
 
 describe('IngredientsService', () => {
   let service: IngredientsService;
@@ -19,6 +20,8 @@ describe('IngredientsService', () => {
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         IngredientsService,
@@ -29,147 +32,161 @@ describe('IngredientsService', () => {
     service = module.get<IngredientsService>(IngredientsService);
   });
 
-  // Create test
-  it('should create an ingredient', async () => {
-    const createIngredientDto = {
-      name: 'Vodka',
-      description: 'A strong alcoholic drink',
-      isAlcoholic: true,
-      imageUrl: 'https://example.com/vodka.jpg',
-    };
-
-    const createdIngredient = {
-      id: 1,
-      ...createIngredientDto,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    prismaMock.ingredient.create.mockResolvedValue(createdIngredient);
-    await expect(service.create(createIngredientDto)).resolves.toEqual(
-      createdIngredient,
-    );
-    expect(prismaMock.ingredient.create).toHaveBeenCalledWith({
-      data: createIngredientDto,
-    });
-  });
-
-  // FindAll test
-  it('should return all ingredients', async () => {
-    const ingredients = [
-      {
-        id: 1,
+  describe('create', () => {
+    it('should create an ingredient', async () => {
+      const dto = {
         name: 'Vodka',
         description: 'A strong alcoholic drink',
         isAlcoholic: true,
         imageUrl: 'https://example.com/vodka.jpg',
-      },
-      {
-        id: 2,
-        name: 'Tequila',
-        description: 'A strong alcoholic drink',
-        isAlcoholic: false,
-        imageUrl: 'https://example.com/tequila.jpg',
-      },
-    ];
+      };
+      const created = makeIngredient(dto);
 
-    prismaMock.ingredient.findMany.mockResolvedValue(ingredients);
-    prismaMock.ingredient.count.mockResolvedValue(ingredients.length);
-
-    const paginationQuery = { page: 1, limit: 10 };
-
-    await expect(service.findAll(paginationQuery)).resolves.toEqual({
-      data: ingredients,
-      meta: {
-        total: ingredients.length,
-        page: 1,
-        limit: 10,
-        totalPages: 1,
-      },
-    });
-
-    expect(prismaMock.ingredient.findMany).toHaveBeenCalledWith({
-      skip: 0,
-      take: 10,
-      orderBy: { name: 'asc' },
-    });
-    expect(prismaMock.ingredient.count).toHaveBeenCalled();
-  });
-
-  // FindOne test
-  it('should return an ingredient by id', async () => {
-    const ingredient = {
-      id: 1,
-      name: 'Vodka',
-      description: 'A strong alcoholic drink',
-      isAlcoholic: true,
-      imageUrl: 'https://example.com/vodka.jpg',
-    };
-
-    prismaMock.ingredient.findUnique.mockResolvedValue(ingredient);
-    await expect(service.findOne(1)).resolves.toEqual(ingredient);
-    expect(prismaMock.ingredient.findUnique).toHaveBeenCalledWith({
-      where: { id: 1 },
+      prismaMock.ingredient.create.mockResolvedValue(created);
+      await expect(service.create(dto)).resolves.toEqual(created);
+      expect(prismaMock.ingredient.create).toHaveBeenCalledWith({ data: dto });
     });
   });
 
-  // Update test
-  it('should update an ingredient', async () => {
-    const updateIngredientDto = {
-      name: 'Rum',
-      description: 'A strong alcoholic drink',
-      imageUrl: 'https://example.com/rum.jpg',
-    };
+  describe('findAll', () => {
+    it('should return paginated ingredients without filters', async () => {
+      const ingredients = [
+        makeIngredient({ id: 1 }),
+        makeIngredient({ id: 2, name: 'Tequila' }),
+      ];
 
-    const updatedIngredient = {
-      id: 1,
-      ...updateIngredientDto,
-      isAlcoholic: true,
-      imageUrl: 'https://example.com/rum.jpg',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+      prismaMock.ingredient.findMany.mockResolvedValue(ingredients);
+      prismaMock.ingredient.count.mockResolvedValue(ingredients.length);
 
-    const existingIngredient = {
-      id: 1,
-      name: 'Vodka',
-      description: 'A strong alcoholic drink',
-      isAlcoholic: true,
-      imageUrl: 'https://example.com/vodka.jpg',
-    };
+      const result = await service.findAll({ page: 1, limit: 10 });
 
-    prismaMock.ingredient.findUnique.mockResolvedValue(existingIngredient);
-    prismaMock.ingredient.update.mockResolvedValue(updatedIngredient);
+      expect(result).toEqual({
+        data: ingredients,
+        meta: { total: 2, page: 1, limit: 10, totalPages: 1 },
+      });
+      expect(prismaMock.ingredient.findMany).toHaveBeenCalledWith({
+        where: {},
+        skip: 0,
+        take: 10,
+        orderBy: { name: 'asc' },
+      });
+      expect(prismaMock.ingredient.count).toHaveBeenCalledWith({ where: {} });
+    });
 
-    await expect(service.update(1, updateIngredientDto)).resolves.toEqual(
-      updatedIngredient,
-    );
-    expect(prismaMock.ingredient.update).toHaveBeenCalledWith({
-      where: { id: 1 },
-      data: updateIngredientDto,
+    it('should filter by search term', async () => {
+      const ingredients = [makeIngredient({ id: 1 })];
+
+      prismaMock.ingredient.findMany.mockResolvedValue(ingredients);
+      prismaMock.ingredient.count.mockResolvedValue(1);
+
+      await service.findAll({ search: 'Vodka' });
+
+      expect(prismaMock.ingredient.findMany).toHaveBeenCalledWith({
+        where: { name: { contains: 'Vodka', mode: 'insensitive' } },
+        skip: 0,
+        take: 10,
+        orderBy: { name: 'asc' },
+      });
+      expect(prismaMock.ingredient.count).toHaveBeenCalledWith({
+        where: { name: { contains: 'Vodka', mode: 'insensitive' } },
+      });
+    });
+
+    it('should filter by isAlcoholic=true', async () => {
+      prismaMock.ingredient.findMany.mockResolvedValue([]);
+      prismaMock.ingredient.count.mockResolvedValue(0);
+
+      await service.findAll({ isAlcoholic: true });
+
+      expect(prismaMock.ingredient.findMany).toHaveBeenCalledWith({
+        where: { isAlcoholic: true },
+        skip: 0,
+        take: 10,
+        orderBy: { name: 'asc' },
+      });
+    });
+
+    it('should filter by isAlcoholic=false', async () => {
+      prismaMock.ingredient.findMany.mockResolvedValue([]);
+      prismaMock.ingredient.count.mockResolvedValue(0);
+
+      await service.findAll({ isAlcoholic: false });
+
+      expect(prismaMock.ingredient.findMany).toHaveBeenCalledWith({
+        where: { isAlcoholic: false },
+        skip: 0,
+        take: 10,
+        orderBy: { name: 'asc' },
+      });
+    });
+
+    it('should combine search and isAlcoholic filters', async () => {
+      prismaMock.ingredient.findMany.mockResolvedValue([]);
+      prismaMock.ingredient.count.mockResolvedValue(0);
+
+      await service.findAll({ search: 'Rum', isAlcoholic: true });
+
+      expect(prismaMock.ingredient.findMany).toHaveBeenCalledWith({
+        where: {
+          name: { contains: 'Rum', mode: 'insensitive' },
+          isAlcoholic: true,
+        },
+        skip: 0,
+        take: 10,
+        orderBy: { name: 'asc' },
+      });
     });
   });
 
-  // Delete test
-  it('should delete an ingredient', async () => {
-    const existingIngredient = {
-      id: 1,
-      name: 'Vodka',
-      description: 'A strong alcoholic drink',
-      isAlcoholic: true,
-      imageUrl: 'https://example.com/vodka.jpg',
-    };
-    prismaMock.ingredient.findUnique.mockResolvedValue(existingIngredient);
-    prismaMock.ingredient.delete.mockResolvedValue({});
-    await expect(service.remove(1)).resolves.toEqual({});
-    expect(prismaMock.ingredient.delete).toHaveBeenCalledWith({
-      where: { id: 1 },
+  describe('findOne', () => {
+    it('should return an ingredient by id', async () => {
+      const ingredient = makeIngredient({ id: 1 });
+
+      prismaMock.ingredient.findUnique.mockResolvedValue(ingredient);
+      await expect(service.findOne(1)).resolves.toEqual(ingredient);
+      expect(prismaMock.ingredient.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
+    });
+
+    it('should throw NotFoundException when ingredient does not exist', async () => {
+      prismaMock.ingredient.findUnique.mockResolvedValue(null);
+      await expect(service.findOne(-1)).rejects.toThrow(NotFoundException);
     });
   });
 
-  // Test 404
-  it('should throw NotFoundException when ingredient does not exist', async () => {
-    prismaMock.ingredient.findUnique.mockResolvedValue(null);
-    await expect(service.findOne(-1)).rejects.toThrow(NotFoundException);
+  describe('update', () => {
+    it('should update an ingredient', async () => {
+      const existing = makeIngredient({ id: 1 });
+      const dto = { name: 'Rum', description: 'A Caribbean spirit' };
+      const updated = makeIngredient({ id: 1, ...dto });
+
+      prismaMock.ingredient.findUnique.mockResolvedValue(existing);
+      prismaMock.ingredient.update.mockResolvedValue(updated);
+
+      await expect(service.update(1, dto)).resolves.toEqual(updated);
+      expect(prismaMock.ingredient.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: dto,
+      });
+    });
+  });
+
+  describe('remove', () => {
+    it('should delete an ingredient', async () => {
+      const existing = makeIngredient({ id: 1 });
+      prismaMock.ingredient.findUnique.mockResolvedValue(existing);
+      prismaMock.ingredient.delete.mockResolvedValue(existing);
+
+      await expect(service.remove(1)).resolves.toEqual(existing);
+      expect(prismaMock.ingredient.delete).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
+    });
+
+    it('should throw NotFoundException when ingredient does not exist', async () => {
+      prismaMock.ingredient.findUnique.mockResolvedValue(null);
+      await expect(service.remove(-1)).rejects.toThrow(NotFoundException);
+    });
   });
 });

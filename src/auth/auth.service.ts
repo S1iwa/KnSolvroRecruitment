@@ -33,8 +33,15 @@ export class AuthService {
       },
     });
 
-    const { passwordHash: _, ...result } = user;
-    return result;
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+    };
   }
 
   async login(dto: LoginDto) {

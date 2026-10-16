@@ -23,9 +23,11 @@ async function bootstrap() {
     .setTitle('Cocktail API')
     .setDescription('REST API for managing cocktails and their ingredients')
     .setVersion('1.0')
+    .addTag('auth', 'Registration and authentication')
     .addTag('cocktails', 'Operations on cocktails and related ingredients')
     .addTag('ingredients', 'Management of cocktail ingredients')
     .addTag('categories', 'Management of cocktail categories')
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

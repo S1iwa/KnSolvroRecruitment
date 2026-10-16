@@ -18,10 +18,12 @@ export interface UserPayload {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
+    if (!process.env.JWT_SECRET)
+      throw new Error('JWT_SECRET is not defined in environment variables');
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'Pomidor',
+      secretOrKey: process.env.JWT_SECRET,
     });
   }
 
