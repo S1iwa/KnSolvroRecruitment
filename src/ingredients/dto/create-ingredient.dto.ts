@@ -40,5 +40,5 @@ export class CreateIngredientDto {
   @IsOptional()
   @IsString()
   @IsUrl()
-  imageUrl?: string;
+  imageUrl: string;
 }
