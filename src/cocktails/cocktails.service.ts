@@ -14,6 +14,34 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, Role } from '../generated/prisma/client';
 import { UserPayload } from '../auth/strategies/jwt.strategy';
 
+export const cocktailInclude = {
+  ingredients: { include: { ingredient: true } },
+  category: true,
+  author: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  },
+};
+
+export const cocktailDetailInclude = {
+  ...cocktailInclude,
+  reviews: {
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' as const },
+    take: 10,
+  },
+};
+
 @Injectable()
 export class CocktailsService {
   constructor(private prisma: PrismaService) {}
@@ -24,7 +52,7 @@ export class CocktailsService {
         name: dto.name,
         instructions: dto.instructions,
         categoryId: dto.categoryId,
-        authorId: authorId,
+        authorId,
         ingredients: {
           create: dto.ingredients.map((ing) => ({
             ingredientId: ing.ingredientId,
@@ -37,6 +65,13 @@ export class CocktailsService {
       },
       include: {
         ingredients: true,
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
   }
@@ -61,44 +96,35 @@ export class CocktailsService {
     if (search) where.name = { contains: search, mode: 'insensitive' };
     if (categoryId !== undefined) where.categoryId = categoryId;
     if (authorId !== undefined) where.authorId = authorId;
-    if (isAlcoholic !== undefined)
-      if (isAlcoholic)
-        where.ingredients = {
-          some: {
-            ingredient: {
-              isAlcoholic: true,
-            },
-          },
-        };
-      else
-        where.ingredients = {
-          none: {
-            ingredient: {
-              isAlcoholic: true,
-            },
-          },
-        };
 
+    const alcoholicFilter =
+      isAlcoholic !== undefined
+        ? isAlcoholic
+          ? { some: { ingredient: { isAlcoholic: true } } }
+          : { none: { ingredient: { isAlcoholic: true } } }
+        : undefined;
+
+    let ingredientFilter: Prisma.CocktailIngredientWhereInput | undefined;
     if (ingredientId !== undefined || ingredientName) {
-      const ingredientCondition: Prisma.CocktailIngredientWhereInput = {};
-      if (ingredientId !== undefined)
-        ingredientCondition.ingredientId = ingredientId;
-      if (ingredientName)
-        ingredientCondition.ingredient = {
-          name: { contains: ingredientName, mode: 'insensitive' },
-        };
+      ingredientFilter = {
+        ...(ingredientId !== undefined && { ingredientId }),
+        ...(ingredientName && {
+          ingredient: {
+            name: { contains: ingredientName, mode: 'insensitive' },
+          },
+        }),
+      };
+    }
 
-      if (where.ingredients) {
-        where.AND = [
-          { ingredients: where.ingredients },
-          { ingredients: { some: ingredientCondition } },
-        ];
-        delete where.ingredients;
-      } else {
-        where.ingredients = {
-          some: ingredientCondition,
-        };
-      }
+    if (alcoholicFilter && ingredientFilter) {
+      where.AND = [
+        { ingredients: alcoholicFilter },
+        { ingredients: { some: ingredientFilter } },
+      ];
+    } else if (alcoholicFilter) {
+      where.ingredients = alcoholicFilter;
+    } else if (ingredientFilter) {
+      where.ingredients = { some: ingredientFilter };
     }
 
     const [data, total] = await Promise.all([
@@ -107,10 +133,7 @@ export class CocktailsService {
         skip,
         take: limit,
         orderBy: { [sortBy]: sortOrder },
-        include: {
-          ingredients: { include: { ingredient: true } },
-          category: true,
-        },
+        include: cocktailInclude,
       }),
       this.prisma.cocktail.count({ where }),
     ]);
@@ -128,11 +151,8 @@ export class CocktailsService {
 
   async findOne(id: number) {
     const cocktail = await this.prisma.cocktail.findUnique({
-      where: { id: id },
-      include: {
-        ingredients: { include: { ingredient: true } },
-        category: true,
-      },
+      where: { id },
+      include: cocktailDetailInclude,
     });
     if (!cocktail)
       throw new NotFoundException(`Cocktail with ID ${id} not found`);
@@ -166,10 +186,7 @@ export class CocktailsService {
       return tx.cocktail.update({
         where: { id },
         data: updateData,
-        include: {
-          ingredients: { include: { ingredient: true } },
-          category: true,
-        },
+        include: cocktailInclude,
       });
     });
   }
@@ -183,11 +200,8 @@ export class CocktailsService {
       );
 
     return this.prisma.cocktail.delete({
-      where: { id: id },
-      include: {
-        ingredients: { include: { ingredient: true } },
-        category: true,
-      },
+      where: { id },
+      include: cocktailInclude,
     });
   }
 }

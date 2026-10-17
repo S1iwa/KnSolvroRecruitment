@@ -27,6 +27,7 @@ async function bootstrap() {
     .addTag('cocktails', 'Operations on cocktails and related ingredients')
     .addTag('ingredients', 'Management of cocktail ingredients')
     .addTag('categories', 'Management of cocktail categories')
+    .addTag('reviews', 'Cocktail reviews and ratings')
     .addBearerAuth()
     .build();
 

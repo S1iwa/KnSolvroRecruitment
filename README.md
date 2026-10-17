@@ -122,9 +122,6 @@ Once the application is running, full documentation with interactive endpoint te
 ## Tests
 
 ```bash
-# Run all unit tests
+# Run unit tests
 npm test
-
-# Integration / E2E tests
-npm run test:e2e
 ```

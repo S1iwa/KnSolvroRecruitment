@@ -1,5 +1,6 @@
 import { CreateCocktailDto } from '../cocktails/dto/create-cocktail.dto';
 import { UpdateCocktailDto } from '../cocktails/dto/update-cocktail.dto';
+import { Role } from '../generated/prisma/enums';
 
 export function makeCocktail(overrides: Record<string, any> = {}) {
   return {
@@ -62,7 +63,7 @@ export function makeUser(overrides: Record<string, any> = {}) {
   return {
     id: 1,
     email: 'user@example.com',
-    role: 'USER',
+    role: Role.USER,
     ...overrides,
   };
 }
@@ -73,6 +74,23 @@ export function makeCategory(overrides: Record<string, any> = {}) {
     name: 'Longdrink',
     createdAt: new Date(),
     updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
+export function makeReview(overrides: Record<string, any> = {}) {
+  return {
+    id: 1,
+    rating: 5,
+    comment: 'Great cocktail!',
+    userId: 1,
+    cocktailId: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    user: {
+      id: 1,
+      name: 'John Doe',
+    },
     ...overrides,
   };
 }

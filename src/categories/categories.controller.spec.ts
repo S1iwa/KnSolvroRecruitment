@@ -30,7 +30,6 @@ describe('CategoriesController', () => {
     controller = module.get<CategoriesController>(CategoriesController);
   });
 
-  // Create test
   it('should run create method in service', async () => {
     const dto = { name: 'Beer' };
     categoriesServiceMock.create.mockReturnValue({ id: 1, ...dto });
@@ -40,7 +39,6 @@ describe('CategoriesController', () => {
     expect(categoriesServiceMock.create).toHaveBeenCalledWith(dto);
   });
 
-  // FindAll test
   it('should run findAll method in service', async () => {
     const categories = [
       { id: 1, name: 'Beer' },
@@ -57,7 +55,6 @@ describe('CategoriesController', () => {
     expect(categoriesServiceMock.findAll).toHaveBeenCalled();
   });
 
-  // FindOne test
   it('should run findOne method in service', async () => {
     const category = { id: 1, name: 'Beer' };
     categoriesServiceMock.findOne.mockReturnValue(category);
@@ -67,7 +64,6 @@ describe('CategoriesController', () => {
     expect(categoriesServiceMock.findOne).toHaveBeenCalledWith(1);
   });
 
-  // Update test
   it('should run update method in service', async () => {
     const dto = { name: 'Short drink' };
     categoriesServiceMock.update.mockReturnValue({ id: 1, ...dto });
@@ -77,7 +73,6 @@ describe('CategoriesController', () => {
     expect(result).toEqual({ id: 1, ...dto });
   });
 
-  // Delete test
   it('should run remove method in service', async () => {
     const category = { id: 1, name: 'Beer' };
     categoriesServiceMock.remove.mockReturnValue(category);
