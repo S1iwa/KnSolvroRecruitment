@@ -44,7 +44,6 @@ describe('CocktailsController', () => {
     controller = module.get<CocktailsController>(CocktailsController);
   });
 
-  // Create test
   it('should run create method in service with user.id', async () => {
     const dto = makeCreateCocktailDto();
     const created = makeCocktail();
@@ -55,7 +54,6 @@ describe('CocktailsController', () => {
     expect(cocktailsServiceMock.create).toHaveBeenCalledWith(dto, user.id);
   });
 
-  // FindAll test
   it('should run findAll method in service', async () => {
     const response = {
       data: [makeCocktail()],
@@ -69,7 +67,6 @@ describe('CocktailsController', () => {
     expect(cocktailsServiceMock.findAll).toHaveBeenCalledWith(query);
   });
 
-  // FindOne test
   it('should run findOne method in service', async () => {
     const cocktail = makeCocktail();
     cocktailsServiceMock.findOne.mockReturnValue(cocktail);
@@ -79,7 +76,6 @@ describe('CocktailsController', () => {
     expect(cocktailsServiceMock.findOne).toHaveBeenCalledWith(1);
   });
 
-  // Update test
   it('should run update method in service with user', async () => {
     const dto = makeUpdateCocktailDto();
     const updated = makeCocktail({ name: dto.name });
@@ -90,7 +86,6 @@ describe('CocktailsController', () => {
     expect(cocktailsServiceMock.update).toHaveBeenCalledWith(1, dto, user);
   });
 
-  // Delete test
   it('should run remove method in service with user', async () => {
     cocktailsServiceMock.remove.mockReturnValue({});
 

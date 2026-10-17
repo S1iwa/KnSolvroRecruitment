@@ -31,7 +31,6 @@ describe('IngredientsController', () => {
     controller = module.get<IngredientsController>(IngredientsController);
   });
 
-  // Create test
   it('should run create method in service', async () => {
     const dto = {
       name: 'Vodka',
@@ -46,7 +45,6 @@ describe('IngredientsController', () => {
     expect(ingredientsServiceMock.create).toHaveBeenCalledWith(dto);
   });
 
-  // FindAll test – no filters
   it('should run findAll without filters', async () => {
     const ingredients = [
       makeIngredient({ id: 1 }),
@@ -64,7 +62,6 @@ describe('IngredientsController', () => {
     expect(ingredientsServiceMock.findAll).toHaveBeenCalledWith(query);
   });
 
-  // FindAll test – with search filter
   it('should run findAll with search filter', async () => {
     const ingredients = [makeIngredient({ id: 1 })];
     const response = {
@@ -79,7 +76,6 @@ describe('IngredientsController', () => {
     expect(ingredientsServiceMock.findAll).toHaveBeenCalledWith(query);
   });
 
-  // FindAll test – with isAlcoholic filter
   it('should run findAll with isAlcoholic filter', async () => {
     const ingredients = [makeIngredient({ id: 1, isAlcoholic: true })];
     const response = {
@@ -94,7 +90,6 @@ describe('IngredientsController', () => {
     expect(ingredientsServiceMock.findAll).toHaveBeenCalledWith(query);
   });
 
-  // FindOne test
   it('should run findOne method in service', async () => {
     const ingredient = makeIngredient({ id: 1 });
     ingredientsServiceMock.findOne.mockReturnValue(ingredient);
@@ -104,7 +99,6 @@ describe('IngredientsController', () => {
     expect(ingredientsServiceMock.findOne).toHaveBeenCalledWith(1);
   });
 
-  // Update test
   it('should run update method in service', async () => {
     const dto = {
       name: 'Rum',
@@ -119,7 +113,6 @@ describe('IngredientsController', () => {
     expect(ingredientsServiceMock.update).toHaveBeenCalledWith(1, dto);
   });
 
-  // Delete test
   it('should run remove method in service', async () => {
     const ingredient = makeIngredient({ id: 1 });
     ingredientsServiceMock.remove.mockReturnValue(ingredient);

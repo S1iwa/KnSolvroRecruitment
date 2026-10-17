@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CocktailsService } from './cocktails.service';
+import {
+  CocktailsService,
+  cocktailInclude,
+  cocktailDetailInclude,
+} from './cocktails.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   makeCocktail,
@@ -72,7 +76,16 @@ describe('CocktailsService', () => {
             })),
           },
         },
-        include: { ingredients: true },
+        include: {
+          ingredients: true,
+          author: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
       });
     });
   });
@@ -103,10 +116,7 @@ describe('CocktailsService', () => {
         skip: 0,
         take: 10,
         orderBy: { name: 'asc' },
-        include: {
-          ingredients: { include: { ingredient: true } },
-          category: true,
-        },
+        include: cocktailInclude,
       });
       expect(prismaMock.cocktail.count).toHaveBeenCalledWith({ where: {} });
     });
@@ -131,10 +141,7 @@ describe('CocktailsService', () => {
         skip: 0,
         take: 10,
         orderBy: { name: 'asc' },
-        include: {
-          ingredients: { include: { ingredient: true } },
-          category: true,
-        },
+        include: cocktailInclude,
       });
       expect(prismaMock.cocktail.count).toHaveBeenCalledWith({ where: {} });
     });
@@ -160,10 +167,7 @@ describe('CocktailsService', () => {
         skip: 0,
         take: 10,
         orderBy: { name: 'asc' },
-        include: {
-          ingredients: { include: { ingredient: true } },
-          category: true,
-        },
+        include: cocktailInclude,
       });
       expect(prismaMock.cocktail.count).toHaveBeenCalledWith({
         where: {
@@ -193,10 +197,7 @@ describe('CocktailsService', () => {
         skip: 0,
         take: 10,
         orderBy: { name: 'asc' },
-        include: {
-          ingredients: { include: { ingredient: true } },
-          category: true,
-        },
+        include: cocktailInclude,
       });
     });
 
@@ -219,10 +220,7 @@ describe('CocktailsService', () => {
         skip: 0,
         take: 10,
         orderBy: { name: 'asc' },
-        include: {
-          ingredients: { include: { ingredient: true } },
-          category: true,
-        },
+        include: cocktailInclude,
       });
     });
 
@@ -249,10 +247,7 @@ describe('CocktailsService', () => {
         skip: 0,
         take: 10,
         orderBy: { createdAt: 'desc' },
-        include: {
-          ingredients: { include: { ingredient: true } },
-          category: true,
-        },
+        include: cocktailInclude,
       });
     });
 
@@ -289,10 +284,7 @@ describe('CocktailsService', () => {
         skip: 0,
         take: 10,
         orderBy: { name: 'asc' },
-        include: {
-          ingredients: { include: { ingredient: true } },
-          category: true,
-        },
+        include: cocktailInclude,
       });
     });
   });
@@ -305,10 +297,7 @@ describe('CocktailsService', () => {
       await expect(service.findOne(1)).resolves.toEqual(cocktail);
       expect(prismaMock.cocktail.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
-        include: {
-          ingredients: { include: { ingredient: true } },
-          category: true,
-        },
+        include: cocktailDetailInclude,
       });
     });
 
@@ -318,10 +307,7 @@ describe('CocktailsService', () => {
       await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
       expect(prismaMock.cocktail.findUnique).toHaveBeenCalledWith({
         where: { id: 999 },
-        include: {
-          ingredients: { include: { ingredient: true } },
-          category: true,
-        },
+        include: cocktailDetailInclude,
       });
     });
   });
@@ -383,10 +369,7 @@ describe('CocktailsService', () => {
           name: updateDto.name,
           instructions: updateDto.instructions,
         },
-        include: {
-          ingredients: { include: { ingredient: true } },
-          category: true,
-        },
+        include: cocktailInclude,
       });
     });
 
@@ -410,10 +393,7 @@ describe('CocktailsService', () => {
       expect(prismaMock.cocktail.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { name: 'Simple Name Update' },
-        include: {
-          ingredients: { include: { ingredient: true } },
-          category: true,
-        },
+        include: cocktailInclude,
       });
     });
 
@@ -480,10 +460,7 @@ describe('CocktailsService', () => {
       expect(result).toEqual(existing);
       expect(prismaMock.cocktail.delete).toHaveBeenCalledWith({
         where: { id: 1 },
-        include: {
-          ingredients: { include: { ingredient: true } },
-          category: true,
-        },
+        include: cocktailInclude,
       });
     });
 

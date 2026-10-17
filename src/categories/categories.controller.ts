@@ -13,7 +13,7 @@ import {
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { FilterCategoriesDto } from './dto/filter-categories.dto';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -47,10 +47,12 @@ export class CategoriesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all categories (paginated)' })
+  @ApiOperation({
+    summary: 'Get all categories with optional search (paginated)',
+  })
   @ApiResponse({ status: 200, description: 'Paginated list of categories' })
-  findAll(@Query() paginationQuery: PaginationQueryDto) {
-    return this.categoriesService.findAll(paginationQuery);
+  findAll(@Query() query: FilterCategoriesDto) {
+    return this.categoriesService.findAll(query);
   }
 
   @Get(':id')

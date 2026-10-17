@@ -1,4 +1,5 @@
 import {
+  ArrayMinSize,
   IsArray,
   IsInt,
   IsNumber,
@@ -78,6 +79,7 @@ export class CreateCocktailDto {
     description: 'List of ingredients with amounts',
   })
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => CocktailIngredientDto)
   ingredients: CocktailIngredientDto[];

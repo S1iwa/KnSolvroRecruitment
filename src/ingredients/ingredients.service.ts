@@ -22,15 +22,13 @@ export class IngredientsService {
       name?: { contains: string; mode: 'insensitive' };
       isAlcoholic?: boolean;
     } = {};
-    if (search)
-      where.name = { contains: search, mode: 'insensitive' };
-    if (isAlcoholic !== undefined)
-      where.isAlcoholic = isAlcoholic;
+    if (search) where.name = { contains: search, mode: 'insensitive' };
+    if (isAlcoholic !== undefined) where.isAlcoholic = isAlcoholic;
 
     const [data, total] = await Promise.all([
       this.prisma.ingredient.findMany({
         where,
-        skip: skip,
+        skip,
         take: limit,
         orderBy: { name: 'asc' },
       }),
@@ -50,7 +48,7 @@ export class IngredientsService {
 
   async findOne(id: number) {
     const ingredient = await this.prisma.ingredient.findUnique({
-      where: { id: id },
+      where: { id },
     });
     if (!ingredient)
       throw new NotFoundException(`Ingredient with ID ${id} not found`);
@@ -60,7 +58,7 @@ export class IngredientsService {
   async update(id: number, dto: UpdateIngredientDto) {
     await this.findOne(id);
     return this.prisma.ingredient.update({
-      where: { id: id },
+      where: { id },
       data: dto,
     });
   }
@@ -68,7 +66,7 @@ export class IngredientsService {
   async remove(id: number) {
     await this.findOne(id);
     return this.prisma.ingredient.delete({
-      where: { id: id },
+      where: { id },
     });
   }
 }

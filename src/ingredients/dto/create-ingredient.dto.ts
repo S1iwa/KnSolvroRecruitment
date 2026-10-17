@@ -1,11 +1,5 @@
-import {
-  IsBoolean,
-  IsOptional,
-  IsString,
-  IsUrl,
-  MinLength,
-} from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsString, IsUrl, MinLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateIngredientDto {
   @ApiProperty({
@@ -33,11 +27,10 @@ export class CreateIngredientDto {
   @IsBoolean()
   isAlcoholic: boolean;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: 'https://example.com/vodka.jpg',
     description: 'URL to ingredient image',
   })
-  @IsOptional()
   @IsString()
   @IsUrl()
   imageUrl: string;

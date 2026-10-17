@@ -3,7 +3,6 @@ import { CategoriesService } from './categories.service';
 import { jest } from '@jest/globals';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotFoundException } from '@nestjs/common';
-import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 describe('CategoriesService', () => {
   let service: CategoriesService;
@@ -58,18 +57,36 @@ describe('CategoriesService', () => {
       prismaMock.category.findMany.mockResolvedValue(categories);
       prismaMock.category.count.mockResolvedValue(2);
 
-      const result = await service.findAll(new PaginationQueryDto());
+      const result = await service.findAll();
 
       expect(result).toEqual({
         data: categories,
         meta: { total: 2, page: 1, limit: 10, totalPages: 1 },
       });
       expect(prismaMock.category.findMany).toHaveBeenCalledWith({
+        where: {},
         skip: 0,
         take: 10,
         orderBy: { name: 'asc' },
       });
-      expect(prismaMock.category.count).toHaveBeenCalled();
+      expect(prismaMock.category.count).toHaveBeenCalledWith({ where: {} });
+    });
+
+    it('should filter categories by search term', async () => {
+      prismaMock.category.findMany.mockResolvedValue([]);
+      prismaMock.category.count.mockResolvedValue(0);
+
+      await service.findAll({ search: 'class' });
+
+      expect(prismaMock.category.findMany).toHaveBeenCalledWith({
+        where: { name: { contains: 'class', mode: 'insensitive' } },
+        skip: 0,
+        take: 10,
+        orderBy: { name: 'asc' },
+      });
+      expect(prismaMock.category.count).toHaveBeenCalledWith({
+        where: { name: { contains: 'class', mode: 'insensitive' } },
+      });
     });
 
     it('should handle second page correctly', async () => {
