@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Users
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  cocktails Cocktail[]
+  reviews   Review[]
+}
+
+// Cocktails
+
+model Ingredient {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String
+  isAlcoholic Boolean  @default(false)
+  imageUrl    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cocktailIngredients CocktailIngredient[]
+}
+
+model CocktailIngredient {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  amountValue Decimal?
+  amountUnit  String?
+  amountText  String?
+  order       Int?
+
+  cocktailId Int
+  cocktail   Cocktail @relation(fields: [cocktailId], references: [id], onDelete: Cascade)
+
+  ingredientId Int
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+
+  @@unique([cocktailId, ingredientId])
+  @@index([ingredientId])
+}
+
+model Cocktail {
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  instructions String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  ingredients CocktailIngredient[]
+  reviews     Review[]
+
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([createdAt, id])
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cocktails Cocktail[]
+}
+
+// Universal
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  cocktailId Int
+  cocktail   Cocktail @relation(fields: [cocktailId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cocktailId])
+  @@index([cocktailId])
+  @@index([userId])
+}
